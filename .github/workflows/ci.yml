@@ -196,5 +196,6 @@ jobs:
       with:
         name: ${{ env.ARCHIVE }}
         path: ${{ env.ARCHIVE }}
+        include-hidden-files: true
         compression-level: 9
         retention-days: 30
