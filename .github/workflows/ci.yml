@@ -1,0 +1,200 @@
+name: ci
+
+on:
+  push:
+    branches: [ "master", "main", "ci/test-actions" ]
+  pull_request:
+    branches: [ "master", "main" ]
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to run the workflow on'
+        required: true
+        default: 'master'
+        type: string
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v5
+      with:
+        ref: ${{ github.event.inputs.branch || github.ref }}
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Cache Cargo
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/registry/index
+          ~/.cargo/registry/cache
+          ~/.cargo/git
+          target
+        key: ubuntu-latest-test-${{ hashFiles('Cargo.lock') }}
+        restore-keys: ubuntu-latest-test-
+
+    - name: Run tests
+      run: cargo test -p dnf-shared
+
+  build:
+    name: build-${{ matrix.build }}
+    needs: [ test ]
+    runs-on: ${{ matrix.os }}
+    env:
+      RUST_BACKTRACE: 1
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - build: client-win-msvc
+          crate: client
+          package: dnf-client
+          bin: dnf-launcher
+          os: windows-latest
+          rust: stable
+          target: x86_64-pc-windows-msvc
+
+        - build: client-win-gnu
+          crate: client
+          package: dnf-client
+          bin: dnf-launcher
+          os: windows-latest
+          rust: stable-x86_64-gnu
+          target: x86_64-pc-windows-gnu
+
+        - build: server-linux-gnu
+          crate: server
+          package: dnf-gate-server
+          bin: dnf-gate-server
+          os: ubuntu-latest
+          rust: stable
+          target: x86_64-unknown-linux-gnu
+
+        - build: server-linux-musl
+          crate: server
+          package: dnf-gate-server
+          bin: dnf-gate-server
+          os: ubuntu-latest
+          rust: stable
+          target: x86_64-unknown-linux-musl
+          use_cross: true
+
+        - build: server-win-msvc
+          crate: server
+          package: dnf-gate-server
+          bin: dnf-gate-server
+          os: windows-latest
+          rust: stable
+          target: x86_64-pc-windows-msvc
+
+        - build: server-win-gnu
+          crate: server
+          package: dnf-gate-server
+          bin: dnf-gate-server
+          os: windows-latest
+          rust: stable-x86_64-gnu
+          target: x86_64-pc-windows-gnu
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v5
+      with:
+        ref: ${{ github.event.inputs.branch || github.ref }}
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@master
+      with:
+        toolchain: ${{ matrix.rust }}
+        target: ${{ matrix.target }}
+
+    - name: Install cross
+      if: matrix.use_cross
+      uses: taiki-e/install-action@v2
+      with:
+        tool: cross
+
+    - name: Cache Cargo registry
+      uses: actions/cache@v4
+      with:
+        path: ~/.cargo/registry/index
+        key: ${{ runner.os }}-${{ matrix.target }}-cargo-registry-${{ hashFiles('Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-${{ matrix.target }}-cargo-registry-
+
+    - name: Cache Cargo registry cache
+      uses: actions/cache@v4
+      with:
+        path: ~/.cargo/registry/cache
+        key: ${{ runner.os }}-${{ matrix.target }}-cargo-cache-${{ hashFiles('Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-${{ matrix.target }}-cargo-cache-
+
+    - name: Cache Cargo git dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.cargo/git
+        key: ${{ runner.os }}-${{ matrix.target }}-cargo-git-${{ hashFiles('Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-${{ matrix.target }}-cargo-git-
+
+    - name: Cache Cargo build
+      uses: actions/cache@v4
+      with:
+        path: target
+        key: ${{ runner.os }}-${{ matrix.target }}-cargo-build-${{ hashFiles('Cargo.lock') }}-${{ hashFiles('**/*.rs') }}
+        restore-keys: |
+          ${{ runner.os }}-${{ matrix.target }}-cargo-build-${{ hashFiles('Cargo.lock') }}-
+          ${{ runner.os }}-${{ matrix.target }}-cargo-build-
+
+    - name: Build release binary
+      shell: bash
+      run: |
+        cmd="${{ matrix.use_cross && 'cross' || 'cargo' }}"
+        $cmd build --release --target ${{ matrix.target }} -p ${{ matrix.package }}
+        bin="target/${{ matrix.target }}/release/${{ matrix.bin }}"
+        if [[ "${{ matrix.target }}" == *"windows"* ]]; then
+          bin="${bin}.exe"
+        fi
+        ls -lh "$bin"
+        echo "BIN=$bin" >> $GITHUB_ENV
+
+    - name: Determine archive name
+      shell: bash
+      run: |
+        version="$(grep -m1 -E "^version[[:space:]]*=[[:space:]]*\"[^\"]+\"" Cargo.toml | sed -E 's/^version[[:space:]]*=[[:space:]]*\"([^"]+)\"/\1/' | tr -d '\r')"
+        if [ -z "$version" ]; then
+          echo "Failed to extract version from Cargo.toml" 1>&2
+          exit 1
+        fi
+        echo "ARCHIVE=${{ matrix.bin }}-$version-${{ matrix.target }}" >> $GITHUB_ENV
+
+    - name: Create archive directory
+      shell: bash
+      run: |
+        mkdir -p "$ARCHIVE"
+        cp "$BIN" "$ARCHIVE"/
+        cp README.md "$ARCHIVE"/
+        if [ "${{ matrix.crate }}" == "client" ]; then
+          cp client/Config.example.toml "$ARCHIVE"/
+        else
+          cp server/.env.example "$ARCHIVE"/
+        fi
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ env.ARCHIVE }}
+        path: ${{ env.ARCHIVE }}
+        compression-level: 9
+        retention-days: 30
