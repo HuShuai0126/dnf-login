@@ -1,0 +1,4 @@
+/target
+server/.env
+server/keys/
+client/Config.toml

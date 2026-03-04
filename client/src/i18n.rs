@@ -1,0 +1,584 @@
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub enum Language {
+    English,
+    #[default]
+    ZhCn,
+    ZhTw,
+    Ja,
+    Ko,
+}
+
+impl Language {
+    pub fn label(self) -> &'static str {
+        match self {
+            Language::English => "English",
+            Language::ZhCn => "简体中文",
+            Language::ZhTw => "繁體中文",
+            Language::Ja => "日本語",
+            Language::Ko => "한국어",
+        }
+    }
+
+    pub fn all() -> &'static [Language] {
+        &[
+            Language::English,
+            Language::ZhCn,
+            Language::ZhTw,
+            Language::Ja,
+            Language::Ko,
+        ]
+    }
+}
+
+/// All UI strings for a single locale.
+#[derive(Clone, Copy)]
+pub struct Tr {
+    // App header
+    pub app_title: &'static str,
+    pub app_subtitle: &'static str,
+
+    // Common
+    pub username: &'static str,
+    pub password: &'static str,
+    pub confirm_password: &'static str,
+    pub new_password: &'static str,
+    pub back: &'static str,
+
+    // Input hints
+    pub hint_username: &'static str,
+    pub hint_password: &'static str,
+
+    // Login screen
+    pub remember_password: &'static str,
+    pub enter_game: &'static str,
+    pub signing_in: &'static str,
+    pub register_link: &'static str,
+    pub change_password_link: &'static str,
+    pub settings_link: &'static str,
+    pub warn_server_not_configured: &'static str,
+
+    // Register screen
+    pub create_account_title: &'static str,
+    pub qq_optional: &'static str,
+    pub hint_choose_username: &'static str,
+    pub hint_choose_password: &'static str,
+    pub hint_re_enter_password: &'static str,
+    pub hint_qq: &'static str,
+    pub register_btn: &'static str,
+
+    // Change Password screen
+    pub change_password_title: &'static str,
+    pub current_password: &'static str,
+    pub confirm_new_password: &'static str,
+    pub change_password_btn: &'static str,
+    pub hint_current_password: &'static str,
+    pub hint_enter_new_password: &'static str,
+    pub hint_confirm_new_password: &'static str,
+
+    // Settings screen — background fill mode
+    pub bg_fill_mode_label: &'static str,
+    pub bg_fill_tile: &'static str,
+    pub bg_fill_stretch: &'static str,
+    pub bg_fill_fill: &'static str,
+    pub bg_fill_center: &'static str,
+    pub bg_fill_fit: &'static str,
+
+    // Settings screen — custom background section
+    pub bg_custom_path_label: &'static str,
+    pub bg_custom_path_hint: &'static str,
+    pub bg_custom_path_help: &'static str,
+    pub bg_position_label: &'static str,
+    pub bg_position_append: &'static str,
+    pub bg_position_prepend: &'static str,
+    pub bg_reload_btn: &'static str,
+
+    // Settings screen
+    pub settings_title: &'static str,
+    pub server_url_label: &'static str,
+    pub server_url_hint: &'static str,
+    pub server_url_help: &'static str,
+    pub aes_key_label: &'static str,
+    pub aes_key_hint: &'static str,
+    pub aes_key_help: &'static str,
+    pub saved_config_label: &'static str,
+    pub not_configured: &'static str,
+    pub clear_btn: &'static str,
+    pub save_btn: &'static str,
+    pub language_label: &'static str,
+    pub warn_first_launch: &'static str,
+    pub settings_saved: &'static str,
+
+    // Validation errors
+    pub err_server_not_configured: &'static str,
+    pub err_enter_username_password: &'static str,
+    pub err_enter_username: &'static str,
+    pub err_enter_password: &'static str,
+    pub err_passwords_no_match: &'static str,
+    pub err_enter_old_password: &'static str,
+    pub err_enter_new_password: &'static str,
+    pub err_client_not_init: &'static str,
+
+    // Dynamic error prefixes (caller appends ": " + detail)
+    pub err_mac_prefix: &'static str,
+    pub err_config_prefix: &'static str,
+    pub err_save_prefix: &'static str,
+    pub err_network_prefix: &'static str,
+    pub err_launch_prefix: &'static str,
+
+    // Success messages
+    pub login_success: &'static str,
+    pub register_success: &'static str,
+    pub change_password_success: &'static str,
+}
+
+pub fn translations(lang: Language) -> Tr {
+    match lang {
+        Language::English => EN,
+        Language::ZhCn => ZH_CN,
+        Language::ZhTw => ZH_TW,
+        Language::Ja => JA,
+        Language::Ko => KO,
+    }
+}
+
+// English
+const EN: Tr = Tr {
+    app_title: "DNF Launcher",
+    app_subtitle: "DUNGEON & FIGHTER",
+
+    username: "USERNAME",
+    password: "PASSWORD",
+    confirm_password: "CONFIRM PASSWORD",
+    new_password: "NEW PASSWORD",
+    back: "\u{2190} Back",
+
+    hint_username: "Enter username",
+    hint_password: "Enter password",
+
+    remember_password: "Remember password",
+    enter_game: "ENTER GAME",
+    signing_in: "Signing in\u{2026}",
+    register_link: "Register",
+    change_password_link: "Change Password",
+    settings_link: "Settings",
+    warn_server_not_configured: "Server not configured \u{2014} open Settings to connect.",
+
+    create_account_title: "Create Account",
+    qq_optional: "QQ NUMBER  (optional)",
+    hint_choose_username: "Choose a username",
+    hint_choose_password: "Choose a password",
+    hint_re_enter_password: "Re-enter password",
+    hint_qq: "Enter QQ number",
+    register_btn: "REGISTER",
+
+    change_password_title: "Change Password",
+    current_password: "CURRENT PASSWORD",
+    confirm_new_password: "CONFIRM NEW PASSWORD",
+    change_password_btn: "CHANGE PASSWORD",
+    hint_current_password: "Enter current password",
+    hint_enter_new_password: "Enter new password",
+    hint_confirm_new_password: "Re-enter new password",
+
+    bg_fill_mode_label: "FILL MODE",
+    bg_fill_tile: "Tile",
+    bg_fill_stretch: "Stretch",
+    bg_fill_fill: "Fill",
+    bg_fill_center: "Center",
+    bg_fill_fit: "Fit",
+
+    bg_custom_path_label: "CUSTOM WALLPAPER PATH",
+    bg_custom_path_hint: "e.g. assets/bg",
+    bg_custom_path_help: "All JPG files in this folder are used as wallpapers. Path is relative to the launcher's working directory.",
+    bg_position_label: "INSERT POSITION",
+    bg_position_append: "Append",
+    bg_position_prepend: "Prepend",
+    bg_reload_btn: "RELOAD WALLPAPERS",
+
+    settings_title: "Settings",
+    server_url_label: "SERVER URL",
+    server_url_hint: "e.g. http://192.168.200.131:5505",
+    server_url_help: "Contact the server administrator for the connection address.",
+    aes_key_label: "AES KEY",
+    aes_key_hint: "64 hexadecimal characters (32 bytes)",
+    aes_key_help: "Must be exactly 64 hex characters (0\u{2013}9, a\u{2013}f), representing 32 bytes.",
+    saved_config_label: "SAVED CONFIGURATION",
+    not_configured: "Not configured",
+    clear_btn: "Clear",
+    save_btn: "SAVE",
+    language_label: "LANGUAGE",
+    warn_first_launch: "First launch \u{2014} enter server address and key in Settings.",
+    settings_saved: "Settings saved.",
+
+    err_server_not_configured: "Server not configured. Please set the URL and key in Settings.",
+    err_enter_username_password: "Please enter your username and password.",
+    err_enter_username: "Please enter a username.",
+    err_enter_password: "Please enter a password.",
+    err_passwords_no_match: "Passwords do not match.",
+    err_enter_old_password: "Please enter your current password.",
+    err_enter_new_password: "Please enter a new password.",
+    err_client_not_init: "Client not initialized. Please save server settings first.",
+
+    err_mac_prefix: "Failed to get MAC address",
+    err_config_prefix: "Invalid configuration",
+    err_save_prefix: "Failed to save",
+    err_network_prefix: "Network error",
+    err_launch_prefix: "Failed to launch game",
+
+    login_success: "Login successful. Launching game\u{2026}",
+    register_success: "Registration successful. Please log in.",
+    change_password_success: "Password changed successfully. Please log in again.",
+};
+
+// Simplified Chinese
+const ZH_CN: Tr = Tr {
+    app_title: "DNF 启动器",
+    app_subtitle: "地下城与勇士",
+
+    username: "用户名",
+    password: "密码",
+    confirm_password: "确认密码",
+    new_password: "新密码",
+    back: "\u{2190} 返回",
+
+    hint_username: "输入用户名",
+    hint_password: "输入密码",
+
+    remember_password: "记住密码",
+    enter_game: "进入游戏",
+    signing_in: "登录中\u{2026}",
+    register_link: "注册",
+    change_password_link: "修改密码",
+    settings_link: "设置",
+    warn_server_not_configured: "服务器未配置，请前往设置填写连接信息。",
+
+    create_account_title: "创建账号",
+    qq_optional: "QQ 号（选填）",
+    hint_choose_username: "设置用户名",
+    hint_choose_password: "设置密码",
+    hint_re_enter_password: "再次输入密码",
+    hint_qq: "输入QQ号",
+    register_btn: "立即注册",
+
+    change_password_title: "修改密码",
+    current_password: "原密码",
+    confirm_new_password: "确认新密码",
+    change_password_btn: "确认修改",
+    hint_current_password: "输入原密码",
+    hint_enter_new_password: "输入新密码",
+    hint_confirm_new_password: "再次输入新密码",
+
+    bg_fill_mode_label: "显示方式",
+    bg_fill_tile: "平铺",
+    bg_fill_stretch: "拉伸",
+    bg_fill_fill: "填充",
+    bg_fill_center: "居中",
+    bg_fill_fit: "适应",
+
+    bg_custom_path_label: "自定义壁纸目录",
+    bg_custom_path_hint: "例：assets/bg",
+    bg_custom_path_help: "目录中所有的 JPG 图片将作为壁纸，路径相对于程序所在目录。",
+    bg_position_label: "插入位置",
+    bg_position_append: "追加到末尾",
+    bg_position_prepend: "插入到开头",
+    bg_reload_btn: "重新加载壁纸",
+
+    settings_title: "设置",
+    server_url_label: "服务器地址",
+    server_url_hint: "例：http://192.168.200.131:5505",
+    server_url_help: "请向服务器管理员获取连接地址。",
+    aes_key_label: "AES 密钥",
+    aes_key_hint: "64 位十六进制字符（32 字节）",
+    aes_key_help: "格式：64 个十六进制字符（0\u{2013}9，a\u{2013}f），对应 32 字节。",
+    saved_config_label: "已保存的配置",
+    not_configured: "尚未配置",
+    clear_btn: "清除",
+    save_btn: "保存",
+    language_label: "语言",
+    warn_first_launch: "首次使用，请在此填写服务器地址和密钥。",
+    settings_saved: "设置已保存。",
+
+    err_server_not_configured: "服务器未配置，请在设置中填写地址和密钥。",
+    err_enter_username_password: "请输入用户名和密码。",
+    err_enter_username: "请输入用户名。",
+    err_enter_password: "请输入密码。",
+    err_passwords_no_match: "两次输入的密码不一致。",
+    err_enter_old_password: "请输入原密码。",
+    err_enter_new_password: "请输入新密码。",
+    err_client_not_init: "客户端未初始化，请先保存服务器设置。",
+
+    err_mac_prefix: "获取 MAC 地址失败",
+    err_config_prefix: "配置无效",
+    err_save_prefix: "保存失败",
+    err_network_prefix: "网络错误",
+    err_launch_prefix: "游戏启动失败",
+
+    login_success: "登录成功，正在启动游戏\u{2026}",
+    register_success: "注册成功，请登录。",
+    change_password_success: "密码已修改，请重新登录。",
+};
+
+// Traditional Chinese
+const ZH_TW: Tr = Tr {
+    app_title: "DNF 啟動器",
+    app_subtitle: "地下城與勇士",
+
+    username: "帳號",
+    password: "密碼",
+    confirm_password: "確認密碼",
+    new_password: "新密碼",
+    back: "\u{2190} 返回",
+
+    hint_username: "輸入帳號",
+    hint_password: "輸入密碼",
+
+    remember_password: "記住密碼",
+    enter_game: "進入遊戲",
+    signing_in: "登入中\u{2026}",
+    register_link: "註冊",
+    change_password_link: "修改密碼",
+    settings_link: "設定",
+    warn_server_not_configured: "伺服器未設定，請前往設定填寫連線資訊。",
+
+    create_account_title: "建立帳號",
+    qq_optional: "QQ 號碼（選填）",
+    hint_choose_username: "設定帳號名稱",
+    hint_choose_password: "設定密碼",
+    hint_re_enter_password: "再次輸入密碼",
+    hint_qq: "填入QQ號碼",
+    register_btn: "立即註冊",
+
+    change_password_title: "修改密碼",
+    current_password: "舊密碼",
+    confirm_new_password: "確認新密碼",
+    change_password_btn: "確認修改",
+    hint_current_password: "輸入舊密碼",
+    hint_enter_new_password: "輸入新密碼",
+    hint_confirm_new_password: "再次輸入新密碼",
+
+    bg_fill_mode_label: "顯示方式",
+    bg_fill_tile: "並排",
+    bg_fill_stretch: "延伸",
+    bg_fill_fill: "填滿",
+    bg_fill_center: "置中",
+    bg_fill_fit: "縮放至適合",
+
+    bg_custom_path_label: "自訂壁紙目錄",
+    bg_custom_path_hint: "例：assets/bg",
+    bg_custom_path_help: "目錄中所有 JPG 圖片將作為壁紙，路徑相對於程式所在目錄。",
+    bg_position_label: "插入位置",
+    bg_position_append: "附加至末尾",
+    bg_position_prepend: "插入至開頭",
+    bg_reload_btn: "重新載入壁紙",
+
+    settings_title: "設定",
+    server_url_label: "伺服器位址",
+    server_url_hint: "例：http://192.168.200.131:5505",
+    server_url_help: "請向伺服器管理員取得連線位址。",
+    aes_key_label: "AES 金鑰",
+    aes_key_hint: "64 位十六進位字元（32 位元組）",
+    aes_key_help: "格式：64 個十六進位字元（0\u{2013}9，a\u{2013}f），對應 32 位元組。",
+    saved_config_label: "已儲存的設定",
+    not_configured: "尚未設定",
+    clear_btn: "清除",
+    save_btn: "儲存",
+    language_label: "語言",
+    warn_first_launch: "首次使用，請在此填寫伺服器位址與金鑰。",
+    settings_saved: "設定已儲存。",
+
+    err_server_not_configured: "伺服器未設定，請在設定頁填寫位址與金鑰。",
+    err_enter_username_password: "請輸入帳號與密碼。",
+    err_enter_username: "請輸入帳號。",
+    err_enter_password: "請輸入密碼。",
+    err_passwords_no_match: "兩次輸入的密碼不一致。",
+    err_enter_old_password: "請輸入舊密碼。",
+    err_enter_new_password: "請輸入新密碼。",
+    err_client_not_init: "用戶端未初始化，請先儲存伺服器設定。",
+
+    err_mac_prefix: "取得 MAC 位址失敗",
+    err_config_prefix: "設定無效",
+    err_save_prefix: "儲存失敗",
+    err_network_prefix: "網路錯誤",
+    err_launch_prefix: "遊戲啟動失敗",
+
+    login_success: "登入成功，正在啟動遊戲\u{2026}",
+    register_success: "註冊成功，請登入。",
+    change_password_success: "密碼已修改，請重新登入。",
+};
+
+// Japanese
+const JA: Tr = Tr {
+    app_title: "DNF ランチャー",
+    app_subtitle: "ダンジョン＆ファイター",
+
+    username: "ユーザー名",
+    password: "パスワード",
+    confirm_password: "パスワード（確認）",
+    new_password: "新しいパスワード",
+    back: "\u{2190} 戻る",
+
+    hint_username: "ユーザー名を入力",
+    hint_password: "パスワードを入力",
+
+    remember_password: "パスワードを保存",
+    enter_game: "ゲームを起動",
+    signing_in: "ログイン中\u{2026}",
+    register_link: "新規登録",
+    change_password_link: "パスワード変更",
+    settings_link: "設定",
+    warn_server_not_configured: "サーバーが未設定です。設定を開いて接続情報を入力してください。",
+
+    create_account_title: "アカウント作成",
+    qq_optional: "QQ番号（任意）",
+    hint_choose_username: "ユーザー名を設定",
+    hint_choose_password: "パスワードを設定",
+    hint_re_enter_password: "パスワードをもう一度入力",
+    hint_qq: "QQ番号を入力",
+    register_btn: "登録する",
+
+    change_password_title: "パスワード変更",
+    current_password: "現在のパスワード",
+    confirm_new_password: "新パスワード（確認）",
+    change_password_btn: "変更する",
+    hint_current_password: "現在のパスワードを入力",
+    hint_enter_new_password: "新しいパスワードを入力",
+    hint_confirm_new_password: "新しいパスワードをもう一度",
+
+    bg_fill_mode_label: "表示方法",
+    bg_fill_tile: "並べて表示",
+    bg_fill_stretch: "拡大して表示",
+    bg_fill_fill: "ズーム",
+    bg_fill_center: "中央に表示",
+    bg_fill_fit: "画面に合わせる",
+
+    bg_custom_path_label: "カスタム背景フォルダ",
+    bg_custom_path_hint: "例：assets/bg",
+    bg_custom_path_help: "フォルダ内のすべての JPG ファイルが背景として追加されます。パスは実行ファイルからの相対パスです。",
+    bg_position_label: "挿入位置",
+    bg_position_append: "末尾に追加",
+    bg_position_prepend: "先頭に挿入",
+    bg_reload_btn: "背景を再読み込み",
+
+    settings_title: "設定",
+    server_url_label: "サーバーURL",
+    server_url_hint: "例：http://192.168.200.131:5505",
+    server_url_help: "接続先アドレスはサーバー管理者にお問い合わせください。",
+    aes_key_label: "AESキー",
+    aes_key_hint: "16進数64文字（32バイト）",
+    aes_key_help: "形式：16進数64文字（0\u{2013}9，a\u{2013}f）、32バイト。",
+    saved_config_label: "保存済み設定",
+    not_configured: "未設定",
+    clear_btn: "クリア",
+    save_btn: "保存",
+    language_label: "言語",
+    warn_first_launch: "初回起動です。設定からサーバー接続情報を入力してください。",
+    settings_saved: "設定を保存しました。",
+
+    err_server_not_configured: "サーバーが設定されていません。設定画面でURLとキーを入力してください。",
+    err_enter_username_password: "ユーザー名とパスワードを入力してください。",
+    err_enter_username: "ユーザー名を入力してください。",
+    err_enter_password: "パスワードを入力してください。",
+    err_passwords_no_match: "パスワードが一致しません。",
+    err_enter_old_password: "現在のパスワードを入力してください。",
+    err_enter_new_password: "新しいパスワードを入力してください。",
+    err_client_not_init: "クライアントが初期化されていません。先に設定を保存してください。",
+
+    err_mac_prefix: "MACアドレス取得失敗",
+    err_config_prefix: "設定エラー",
+    err_save_prefix: "保存失敗",
+    err_network_prefix: "ネットワークエラー",
+    err_launch_prefix: "ゲーム起動失敗",
+
+    login_success: "ログイン成功。ゲームを起動中\u{2026}",
+    register_success: "登録完了。ログインしてください。",
+    change_password_success: "パスワードを変更しました。再度ログインしてください。",
+};
+
+// Korean
+const KO: Tr = Tr {
+    app_title: "DNF 런처",
+    app_subtitle: "던전 앤 파이터",
+
+    username: "아이디",
+    password: "비밀번호",
+    confirm_password: "비밀번호 확인",
+    new_password: "새 비밀번호",
+    back: "\u{2190} 뒤로",
+
+    hint_username: "아이디 입력",
+    hint_password: "비밀번호 입력",
+
+    remember_password: "로그인 상태 유지",
+    enter_game: "게임 시작",
+    signing_in: "로그인 중\u{2026}",
+    register_link: "회원가입",
+    change_password_link: "비밀번호 변경",
+    settings_link: "설정",
+    warn_server_not_configured: "서버가 설정되지 않았습니다. 설정에서 연결 정보를 입력해 주세요.",
+
+    create_account_title: "계정 만들기",
+    qq_optional: "QQ 번호 (선택)",
+    hint_choose_username: "사용할 아이디 입력",
+    hint_choose_password: "사용할 비밀번호 입력",
+    hint_re_enter_password: "비밀번호 재입력",
+    hint_qq: "QQ 번호 입력",
+    register_btn: "가입하기",
+
+    change_password_title: "비밀번호 변경",
+    current_password: "기존 비밀번호",
+    confirm_new_password: "새 비밀번호 확인",
+    change_password_btn: "변경하기",
+    hint_current_password: "기존 비밀번호 입력",
+    hint_enter_new_password: "새 비밀번호 입력",
+    hint_confirm_new_password: "새 비밀번호 재입력",
+
+    bg_fill_mode_label: "채우기 방식",
+    bg_fill_tile: "바둑판식",
+    bg_fill_stretch: "늘이기",
+    bg_fill_fill: "채우기",
+    bg_fill_center: "가운데",
+    bg_fill_fit: "화면에 맞춤",
+
+    bg_custom_path_label: "배경 이미지 폴더",
+    bg_custom_path_hint: "예: assets/bg",
+    bg_custom_path_help: "폴더 내 모든 JPG 파일이 배경으로 추가됩니다. 경로는 실행 파일 기준 상대 경로입니다.",
+    bg_position_label: "삽입 위치",
+    bg_position_append: "뒤에 추가",
+    bg_position_prepend: "앞에 삽입",
+    bg_reload_btn: "배경 다시 불러오기",
+
+    settings_title: "설정",
+    server_url_label: "서버 주소",
+    server_url_hint: "예: http://192.168.200.131:5505",
+    server_url_help: "서버 관리자에게 연결 주소를 문의하세요.",
+    aes_key_label: "AES 키",
+    aes_key_hint: "16진수 64자리 (32바이트)",
+    aes_key_help: "형식: 16진수 64자리 (0\u{2013}9, a\u{2013}f), 32바이트.",
+    saved_config_label: "저장된 설정",
+    not_configured: "미설정",
+    clear_btn: "초기화",
+    save_btn: "저장",
+    language_label: "언어",
+    warn_first_launch: "처음 실행하셨네요. 설정에서 서버 주소와 키를 입력해 주세요.",
+    settings_saved: "설정이 저장되었습니다.",
+
+    err_server_not_configured: "서버가 설정되지 않았습니다. 설정에서 주소와 키를 입력해 주세요.",
+    err_enter_username_password: "아이디와 비밀번호를 입력해 주세요.",
+    err_enter_username: "아이디를 입력해 주세요.",
+    err_enter_password: "비밀번호를 입력해 주세요.",
+    err_passwords_no_match: "비밀번호가 일치하지 않습니다.",
+    err_enter_old_password: "기존 비밀번호를 입력해 주세요.",
+    err_enter_new_password: "새 비밀번호를 입력해 주세요.",
+    err_client_not_init: "클라이언트가 초기화되지 않았습니다. 먼저 서버 설정을 저장해 주세요.",
+
+    err_mac_prefix: "MAC 주소 가져오기 실패",
+    err_config_prefix: "설정 오류",
+    err_save_prefix: "저장 실패",
+    err_network_prefix: "네트워크 오류",
+    err_launch_prefix: "게임 실행 실패",
+
+    login_success: "로그인 성공. 게임을 시작합니다\u{2026}",
+    register_success: "가입 완료. 로그인해 주세요.",
+    change_password_success: "비밀번호가 변경되었습니다. 다시 로그인해 주세요.",
+};

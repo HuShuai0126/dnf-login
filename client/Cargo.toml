@@ -1,0 +1,46 @@
+[package]
+name = "dnf-client"
+version.workspace = true
+edition.workspace = true
+
+[[bin]]
+name = "dnf-launcher"
+path = "src/main.rs"
+
+[dependencies]
+dnf-shared = { path = "../shared" }
+tokio.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+anyhow.workspace = true
+reqwest.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+
+eframe = { version = "0.33.3", default-features = false, features = ["default_fonts", "glow"] }
+image = { version = "0.25.9", default-features = false, features = ["jpeg"] }
+
+md5 = "0.8.0"
+rand.workspace = true
+toml = "1.0.3"
+hex = "0.4.3"
+ico = "0.5.0"
+
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.62.2", features = [
+    "Win32_Foundation",
+    "Win32_NetworkManagement_IpHelper",
+    "Win32_System_Threading",
+    "Win32_System_Diagnostics_ToolHelp",
+    "Win32_Security_Cryptography",
+    "Win32_System_SystemInformation",
+    "Win32_System_Memory",
+    "Data_Xml_Dom",
+] }
+
+
+[build-dependencies]
+embed-resource = "3.0.6"
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["test-util"] }

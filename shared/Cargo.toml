@@ -1,0 +1,22 @@
+[package]
+name = "dnf-shared"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+serde_json = { workspace = true }
+
+# Error handling
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+
+# Cryptography
+aes-gcm = { workspace = true }
+rsa = { workspace = true }
+hex = { workspace = true }
+base64 = { workspace = true }
+
+[dev-dependencies]
+tokio-test = "0.4.5"

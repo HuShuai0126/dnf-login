@@ -1,0 +1,147 @@
+use anyhow::Result;
+#[cfg(target_os = "windows")]
+use windows::{
+    Win32::Foundation::*, Win32::NetworkManagement::IpHelper::*,
+    Win32::System::Diagnostics::ToolHelp::*,
+};
+
+#[cfg(target_os = "windows")]
+pub fn get_mac_address() -> Result<String> {
+    unsafe {
+        let mut size: u32 = 0;
+        let _ = GetAdaptersInfo(None, &mut size);
+
+        if size == 0 {
+            anyhow::bail!("No network adapters found");
+        }
+
+        let mut buffer = vec![0u8; size as usize];
+        let adapter_info = buffer.as_mut_ptr() as *mut IP_ADAPTER_INFO;
+
+        let result = GetAdaptersInfo(Some(adapter_info), &mut size);
+        if result != NO_ERROR.0 {
+            anyhow::bail!("Failed to get adapter info: {}", result);
+        }
+
+        // Find the first non-loopback adapter
+        let mut current = adapter_info;
+        while !current.is_null() {
+            let adapter = &*current;
+
+            if adapter.Type == 24 {
+                // MIB_IF_TYPE_LOOPBACK
+                current = adapter.Next;
+                continue;
+            }
+
+            let mac_bytes = &adapter.Address[..adapter.AddressLength as usize];
+            let mac_str = mac_bytes
+                .iter()
+                .map(|b| format!("{:02X}", b))
+                .collect::<Vec<_>>()
+                .join("-");
+
+            return Ok(mac_str);
+        }
+
+        anyhow::bail!("No suitable network adapter found");
+    }
+}
+
+#[cfg(target_os = "windows")]
+pub fn is_process_running(process_name: &str) -> Result<bool> {
+    unsafe {
+        let snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0)?;
+
+        if snapshot.is_invalid() {
+            anyhow::bail!("Failed to create process snapshot");
+        }
+
+        let mut pe32 = PROCESSENTRY32W {
+            dwSize: std::mem::size_of::<PROCESSENTRY32W>() as u32,
+            ..Default::default()
+        };
+
+        if Process32FirstW(snapshot, &mut pe32).is_err() {
+            let _ = CloseHandle(snapshot);
+            anyhow::bail!("Failed to get first process");
+        }
+
+        let target_name = process_name.to_lowercase();
+
+        loop {
+            let exe_file = String::from_utf16_lossy(
+                &pe32.szExeFile[..pe32.szExeFile.iter().position(|&c| c == 0).unwrap_or(0)],
+            );
+
+            if exe_file.to_lowercase() == target_name {
+                let _ = CloseHandle(snapshot);
+                return Ok(true);
+            }
+
+            if Process32NextW(snapshot, &mut pe32).is_err() {
+                break;
+            }
+        }
+
+        let _ = CloseHandle(snapshot);
+        Ok(false)
+    }
+}
+
+#[cfg(target_os = "windows")]
+pub fn launch_dnf(token: &str) -> Result<()> {
+    use std::process::Command;
+
+    let dnf_path = std::env::current_dir()?.join("DNF.exe");
+    if !dnf_path.exists() {
+        anyhow::bail!(
+            "DNF.exe not found. Please place the launcher in the game directory.\nExpected path: {}",
+            dnf_path.display()
+        );
+    }
+
+    if is_process_running("DNF.exe")? {
+        anyhow::bail!("DNF is already running. Please close the game first.");
+    }
+
+    tracing::info!("Launching DNF with authentication token");
+
+    let child = Command::new(&dnf_path).arg(token).spawn()?;
+
+    tracing::info!("DNF launched (PID: {})", child.id());
+
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    #[cfg(target_os = "windows")]
+    fn test_get_mac_address() {
+        match get_mac_address() {
+            Ok(mac) => {
+                assert!(!mac.is_empty());
+                assert!(mac.contains('-'));
+            }
+            Err(e) => {
+                tracing::warn!("Failed to get MAC address: {}", e);
+            }
+        }
+    }
+
+    #[test]
+    #[cfg(target_os = "windows")]
+    fn test_is_process_running() {
+        let result = is_process_running("nonexistent_process_12345.exe");
+        assert!(result.is_ok());
+        assert!(!result.unwrap());
+
+        let result = is_process_running("explorer.exe");
+        if let Ok(running) = result {
+            let _ = running;
+        }
+    }
+}

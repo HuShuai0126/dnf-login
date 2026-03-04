@@ -1,0 +1,14 @@
+# DNF Launcher configuration example.
+# The active config file must be named Config.toml and placed in the same directory as the launcher.
+
+# Server address.
+# Supports HTTP and HTTPS.
+# Example: "http://192.168.200.131:5505" or "https://dnf.example.com"
+# Contact the server administrator for the correct address.
+server_url = ""
+
+# AES encryption key.
+# Must be exactly 64 hexadecimal characters (32 bytes).
+# Must match the server-side configuration exactly.
+# Contact the server administrator for the correct key.
+aes_key = ""
