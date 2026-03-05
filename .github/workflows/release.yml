@@ -102,6 +102,23 @@ jobs:
           target: x86_64-unknown-linux-musl
           use_cross: true
 
+        - build: server-linux-aarch64-gnu
+          crate: server
+          package: dnf-gate-server
+          bin: dnf-gate-server
+          os: ubuntu-24.04-arm
+          rust: stable
+          target: aarch64-unknown-linux-gnu
+
+        - build: server-linux-aarch64-musl
+          crate: server
+          package: dnf-gate-server
+          bin: dnf-gate-server
+          os: ubuntu-24.04-arm
+          rust: stable
+          target: aarch64-unknown-linux-musl
+          docker_image: clux/muslrust:stable
+
         - build: server-win-msvc
           crate: server
           package: dnf-gate-server
@@ -174,8 +191,16 @@ jobs:
     - name: Build release binary
       shell: bash
       run: |
-        cmd="${{ matrix.use_cross && 'cross' || 'cargo' }}"
-        $cmd build --release --target ${{ matrix.target }} -p ${{ matrix.package }}
+        if [ -n "${{ matrix.docker_image }}" ]; then
+          docker run --rm \
+            -v "$(pwd)":/volume \
+            -w /volume \
+            "${{ matrix.docker_image }}" \
+            cargo build --release --target ${{ matrix.target }} -p ${{ matrix.package }}
+        else
+          cmd="${{ matrix.use_cross && 'cross' || 'cargo' }}"
+          $cmd build --release --target ${{ matrix.target }} -p ${{ matrix.package }}
+        fi
         bin="target/${{ matrix.target }}/release/${{ matrix.bin }}"
         if [[ "${{ matrix.target }}" == *"windows"* ]]; then
           bin="${bin}.exe"
@@ -207,13 +232,15 @@ jobs:
         if [[ "${{ runner.os }}" == "Windows" ]]; then
           7z a -tzip -mx=9 "$ARCHIVE.zip" "$ARCHIVE"
           certutil -hashfile "$ARCHIVE.zip" SHA256 > "$ARCHIVE.zip.sha256"
+          asset="$ARCHIVE.zip"
         else
-          zip -r9 "$ARCHIVE.zip" "$ARCHIVE"
-          sha256sum "$ARCHIVE.zip" > "$ARCHIVE.zip.sha256"
+          tar -czf "$ARCHIVE.tar.gz" "$ARCHIVE"
+          sha256sum "$ARCHIVE.tar.gz" > "$ARCHIVE.tar.gz.sha256"
+          asset="$ARCHIVE.tar.gz"
         fi
-        ls -lh "$ARCHIVE.zip"
-        echo "ASSET=$ARCHIVE.zip" >> $GITHUB_ENV
-        echo "ASSET_SUM=$ARCHIVE.zip.sha256" >> $GITHUB_ENV
+        ls -lh "$asset"
+        echo "ASSET=$asset" >> $GITHUB_ENV
+        echo "ASSET_SUM=$asset.sha256" >> $GITHUB_ENV
 
     - name: Upload release archive
       env:

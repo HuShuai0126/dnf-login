@@ -90,6 +90,23 @@ jobs:
           target: x86_64-unknown-linux-musl
           use_cross: true
 
+        - build: server-linux-aarch64-gnu
+          crate: server
+          package: dnf-gate-server
+          bin: dnf-gate-server
+          os: ubuntu-24.04-arm
+          rust: stable
+          target: aarch64-unknown-linux-gnu
+
+        - build: server-linux-aarch64-musl
+          crate: server
+          package: dnf-gate-server
+          bin: dnf-gate-server
+          os: ubuntu-24.04-arm
+          rust: stable
+          target: aarch64-unknown-linux-musl
+          docker_image: clux/muslrust:stable
+
         - build: server-win-msvc
           crate: server
           package: dnf-gate-server
@@ -160,8 +177,16 @@ jobs:
     - name: Build release binary
       shell: bash
       run: |
-        cmd="${{ matrix.use_cross && 'cross' || 'cargo' }}"
-        $cmd build --release --target ${{ matrix.target }} -p ${{ matrix.package }}
+        if [ -n "${{ matrix.docker_image }}" ]; then
+          docker run --rm \
+            -v "$(pwd)":/volume \
+            -w /volume \
+            "${{ matrix.docker_image }}" \
+            cargo build --release --target ${{ matrix.target }} -p ${{ matrix.package }}
+        else
+          cmd="${{ matrix.use_cross && 'cross' || 'cargo' }}"
+          $cmd build --release --target ${{ matrix.target }} -p ${{ matrix.package }}
+        fi
         bin="target/${{ matrix.target }}/release/${{ matrix.bin }}"
         if [[ "${{ matrix.target }}" == *"windows"* ]]; then
           bin="${bin}.exe"
@@ -191,11 +216,23 @@ jobs:
           cp server/.env.example "$ARCHIVE"/
         fi
 
+    - name: Build archive
+      shell: bash
+      run: |
+        if [[ "${{ runner.os }}" == "Windows" ]]; then
+          7z a -tzip -mx=9 "$ARCHIVE.zip" "$ARCHIVE"
+          asset="$ARCHIVE.zip"
+        else
+          tar -czf "$ARCHIVE.tar.gz" "$ARCHIVE"
+          asset="$ARCHIVE.tar.gz"
+        fi
+        ls -lh "$asset"
+        echo "ASSET=$asset" >> $GITHUB_ENV
+
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
         name: ${{ env.ARCHIVE }}
-        path: ${{ env.ARCHIVE }}
-        include-hidden-files: true
+        path: ${{ env.ASSET }}
         compression-level: 9
         retention-days: 30

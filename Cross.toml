@@ -1,2 +1,5 @@
 [target.x86_64-unknown-linux-musl]
 image = "clux/muslrust:stable"
+
+[target.aarch64-unknown-linux-musl]
+image = "clux/muslrust:stable"
