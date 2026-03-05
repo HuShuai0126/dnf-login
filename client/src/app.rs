@@ -98,6 +98,7 @@ pub struct DnfLoginApp {
     settings_server_url: String,
     settings_aes_key: String,
     settings_bg_path: String,
+    settings_plugins_dir: String,
 
     username: String,
     password: String,
@@ -292,6 +293,7 @@ impl DnfLoginApp {
         let settings_server_url = config.server_url.clone();
         let settings_aes_key = config.aes_key.clone();
         let settings_bg_path = config.bg_custom_path.clone();
+        let settings_plugins_dir = config.plugins_dir.clone();
         let tr = translations(config.language);
         let cached_key_preview = Self::make_key_preview(&config.aes_key);
         let app_icon = Self::load_app_icon(&cc.egui_ctx);
@@ -324,6 +326,7 @@ impl DnfLoginApp {
             settings_server_url,
             settings_aes_key,
             settings_bg_path,
+            settings_plugins_dir,
             username,
             password,
             remember_password,
@@ -1457,6 +1460,33 @@ impl DnfLoginApp {
                 let _ = self.config.save();
             }
 
+            ui.add_space(14.0);
+
+            let sep =
+                egui::Rect::from_min_size(ui.cursor().min, egui::vec2(ui.available_width(), 1.0));
+            ui.painter()
+                .rect_filled(sep, egui::CornerRadius::ZERO, Self::c_border());
+            ui.add_space(1.0);
+            ui.add_space(12.0);
+
+            ui.add(Self::text_input(
+                tr.plugins_dir_label,
+                &mut self.settings_plugins_dir,
+                tr.plugins_dir_hint,
+            ));
+            ui.add_space(3.0);
+            ui.label(
+                egui::RichText::new(tr.plugins_dir_help)
+                    .size(11.0)
+                    .color(Self::c_text3()),
+            );
+            ui.add_space(10.0);
+
+            if Self::primary_button_slim(ui, tr.save_btn, true) {
+                self.config.plugins_dir = self.settings_plugins_dir.trim().to_string();
+                let _ = self.config.save();
+            }
+
             if let Some(msg) = &self.message {
                 ui.add_space(12.0);
                 Self::status_box(ui, msg, self.message_is_error);
@@ -1899,16 +1929,26 @@ impl DnfLoginApp {
                                 ) {
                                     tracing::warn!("Failed to save credentials: {}", e);
                                 }
-                                // Clear plaintext password from memory after its last use.
+                                // Clear the in-memory plaintext password.
                                 self.password = String::new();
+                                // Restore from storage now so re-launch works regardless of
+                                // whether the launch call below succeeds or fails.
+                                if self.remember_password
+                                    && let Ok((_, p)) = self.storage.load()
+                                {
+                                    self.password = p;
+                                }
                                 self.set_success(tr.login_success);
                                 self.login_token = Some(token.clone());
                                 self.logged_in_user = Some(self.username.clone());
 
-                                if let Err(e) = DnfLauncher::launch_with_token(&token) {
+                                let plugins_dir = self.config.plugins_dir.clone();
+                                if let Err(e) = DnfLauncher::launch_with_token(&token, &plugins_dir)
+                                {
                                     self.set_error(format!("{}: {}", tr.err_launch_prefix, e));
                                 } else {
                                     tracing::info!("Game launched: user={}", self.username);
+                                    self.message = None;
                                 }
                             } else {
                                 // Server reported success but returned no token; treat as an error.

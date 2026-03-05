@@ -85,6 +85,11 @@ pub struct Tr {
     pub bg_fill_center: &'static str,
     pub bg_fill_fit: &'static str,
 
+    // Settings screen — plugin directory
+    pub plugins_dir_label: &'static str,
+    pub plugins_dir_hint: &'static str,
+    pub plugins_dir_help: &'static str,
+
     // Settings screen — custom background section
     pub bg_custom_path_label: &'static str,
     pub bg_custom_path_hint: &'static str,
@@ -188,6 +193,10 @@ const EN: Tr = Tr {
     bg_fill_center: "Center",
     bg_fill_fit: "Fit",
 
+    plugins_dir_label: "PLUGIN DIRECTORY",
+    plugins_dir_hint: "e.g. plugins",
+    plugins_dir_help: "DLL files in this folder are injected into DNF.exe at launch. Path is relative to the launcher executable.",
+
     bg_custom_path_label: "CUSTOM WALLPAPER PATH",
     bg_custom_path_hint: "e.g. assets/bg",
     bg_custom_path_help: "All JPG files in this folder are used as wallpapers. Path is relative to the launcher's working directory.",
@@ -275,6 +284,10 @@ const ZH_CN: Tr = Tr {
     bg_fill_fill: "填充",
     bg_fill_center: "居中",
     bg_fill_fit: "适应",
+
+    plugins_dir_label: "插件目录",
+    plugins_dir_hint: "例：plugins",
+    plugins_dir_help: "该目录中的 DLL 文件将在游戏启动时注入 DNF.exe，路径相对于启动器所在目录。",
 
     bg_custom_path_label: "自定义壁纸目录",
     bg_custom_path_hint: "例：assets/bg",
@@ -364,6 +377,10 @@ const ZH_TW: Tr = Tr {
     bg_fill_center: "置中",
     bg_fill_fit: "縮放至適合",
 
+    plugins_dir_label: "插件目錄",
+    plugins_dir_hint: "例：plugins",
+    plugins_dir_help: "該目錄中的 DLL 檔案將在遊戲啟動時注入 DNF.exe，路徑相對於啟動器所在目錄。",
+
     bg_custom_path_label: "自訂壁紙目錄",
     bg_custom_path_hint: "例：assets/bg",
     bg_custom_path_help: "目錄中所有 JPG 圖片將作為壁紙，路徑相對於程式所在目錄。",
@@ -452,6 +469,10 @@ const JA: Tr = Tr {
     bg_fill_center: "中央に表示",
     bg_fill_fit: "画面に合わせる",
 
+    plugins_dir_label: "プラグインフォルダ",
+    plugins_dir_hint: "例：plugins",
+    plugins_dir_help: "フォルダ内の DLL ファイルは、ゲーム起動時に DNF.exe へ注入されます。パスはランチャー実行ファイルからの相対パスです。",
+
     bg_custom_path_label: "カスタム背景フォルダ",
     bg_custom_path_hint: "例：assets/bg",
     bg_custom_path_help: "フォルダ内のすべての JPG ファイルが背景として追加されます。パスは実行ファイルからの相対パスです。",
@@ -539,6 +560,10 @@ const KO: Tr = Tr {
     bg_fill_fill: "채우기",
     bg_fill_center: "가운데",
     bg_fill_fit: "화면에 맞춤",
+
+    plugins_dir_label: "플러그인 폴더",
+    plugins_dir_hint: "예: plugins",
+    plugins_dir_help: "이 폴더의 DLL 파일은 게임 실행 시 DNF.exe에 주입됩니다. 경로는 런처 실행 파일 기준 상대 경로입니다.",
 
     bg_custom_path_label: "배경 이미지 폴더",
     bg_custom_path_hint: "예: assets/bg",

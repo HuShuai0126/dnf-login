@@ -18,6 +18,7 @@ A launcher for Dungeon & Fighter (DNF) written in Rust.
 - Optional credential storage encrypted with Windows DPAPI
 - Custom wallpaper directory with five fill modes: Tile, Stretch, Fill, Center, Fit
 - Detects whether the game is already running before launching
+- DLL plugin loading: 32-bit DLL files placed in the configured plugins directory are injected into DNF.exe after launch
 
 
 ## Building
@@ -88,9 +89,28 @@ cd server && cargo run --release
 2. Copy `Config.example.toml` to `Config.toml` in the same directory and set `server_url` and `aes_key`. These can also be configured from the in-app settings screen.
 
 ```toml
-server_url = "http://192.168.200.131:5505"
-aes_key    = "<64 hex characters matching the server>"
+server_url   = "http://192.168.200.131:5505"
+aes_key      = "<64 hex characters matching the server>"
+plugins_dir  = "plugins"
 ```
+
+
+### Plugin Loading
+
+The launcher injects DLL files from the plugins directory into DNF.exe after the game process starts.
+
+**Requirements:**
+
+- DLLs must be 32-bit. 64-bit DLLs will fail to load.
+- The plugins directory path is resolved relative to the launcher executable.
+
+**Setup:**
+
+1. Create a `plugins` directory alongside the launcher executable (or set `plugins_dir` to a different name).
+2. Place 32-bit DLL files in that directory.
+3. Launch the game. Each DLL is loaded in turn after DNF.exe starts.
+
+A log file `plugin_inject.log` is written beside the launcher after each injection run, listing the result for each DLL.
 
 
 ## License

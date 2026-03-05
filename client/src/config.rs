@@ -33,6 +33,8 @@ pub struct AppConfig {
     pub bg_custom_prepend: bool,
     /// How background images are scaled to fill the window.
     pub bg_fill_mode: BgFillMode,
+    /// Directory scanned for DLL `plugins_dir` to inject after DNF.exe launches.
+    pub plugins_dir: String,
 }
 
 impl Default for AppConfig {
@@ -44,6 +46,7 @@ impl Default for AppConfig {
             bg_custom_path: "assets/bg".to_string(),
             bg_custom_prepend: false,
             bg_fill_mode: BgFillMode::Fill,
+            plugins_dir: "plugins".to_string(),
         }
     }
 }

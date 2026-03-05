@@ -4,6 +4,7 @@ members = [
     "shared",
     "server",
     "client",
+    "test-plugin",
 ]
 
 [workspace.package]

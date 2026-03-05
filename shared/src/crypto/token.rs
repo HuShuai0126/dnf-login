@@ -1,9 +1,9 @@
+use aes_gcm::aead::OsRng;
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 use rsa::pkcs1::DecodeRsaPrivateKey;
 use rsa::pkcs8::DecodePrivateKey;
 use rsa::traits::{PublicKeyParts, SignatureScheme};
 use rsa::{Pkcs1v15Sign, RsaPrivateKey};
-use aes_gcm::aead::OsRng;
 
 use crate::types::UserId;
 use crate::{DnfError, Result};
