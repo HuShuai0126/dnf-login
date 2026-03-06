@@ -18,10 +18,10 @@ BEGIN
             VALUE "CompanyName", "DNF Launcher Project"
             VALUE "FileDescription", "DNF Launcher"
             VALUE "FileVersion", "0.1.0.0"
-            VALUE "InternalName", "dnf-launcher"
+            VALUE "InternalName", "llnut launcher"
             VALUE "LegalCopyright", "Copyright (C) 2026 llnut"
             VALUE "OriginalFilename", "dnf-launcher.exe"
-            VALUE "ProductName", "DNF Launcher"
+            VALUE "ProductName", "llnut launcher"
             VALUE "ProductVersion", "0.1.0.0"
         END
     END

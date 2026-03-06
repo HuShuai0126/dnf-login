@@ -49,6 +49,7 @@ enum AppState {
     Register,
     ChangePassword,
     Settings,
+    About,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -1091,7 +1092,7 @@ impl DnfLoginApp {
         ui.add_space(1.0);
         ui.add_space(10.0);
 
-        ui.columns(3, |cols| {
+        ui.columns(4, |cols| {
             cols[0].vertical_centered(|ui| {
                 if ui
                     .link(
@@ -1135,6 +1136,20 @@ impl DnfLoginApp {
                     self.settings_server_url = self.config.server_url.clone();
                     self.settings_aes_key = self.config.aes_key.clone();
                     self.settings_bg_path = self.config.bg_custom_path.clone();
+                }
+            });
+            cols[3].vertical_centered(|ui| {
+                if ui
+                    .link(
+                        egui::RichText::new(tr.about_link)
+                            .size(12.5)
+                            .color(Self::c_text2()),
+                    )
+                    .clicked()
+                {
+                    self.state = AppState::About;
+                    self.message = None;
+                    self.message_is_error = false;
                 }
             });
         });
@@ -1592,10 +1607,66 @@ impl DnfLoginApp {
     }
 }
 
+// About Screen
+impl DnfLoginApp {
+    fn show_about_screen(&mut self, ui: &mut egui::Ui) {
+        let tr = self.t();
+
+        ui.vertical_centered(|ui| {
+            ui.label(
+                egui::RichText::new(tr.about_title)
+                    .size(19.0)
+                    .strong()
+                    .color(Self::c_text()),
+            );
+        });
+        ui.add_space(20.0);
+
+        let row_height = 22.0;
+        let label_width = 90.0;
+
+        let rows: &[(&str, &str, bool)] = &[
+            (tr.about_launcher_name_label, "llnut launcher", false),
+            (tr.about_version_label, env!("CARGO_PKG_VERSION"), false),
+            (
+                tr.about_repo_label,
+                "https://github.com/llnut/dnf-login",
+                true,
+            ),
+            (tr.about_author_label, "llnut", false),
+        ];
+
+        for &(label, value, is_link) in rows {
+            ui.horizontal(|ui| {
+                ui.add_sized(
+                    egui::vec2(label_width, row_height),
+                    egui::Label::new(egui::RichText::new(label).size(11.5).color(Self::c_text2())),
+                );
+                if is_link {
+                    ui.hyperlink_to(
+                        egui::RichText::new(value).size(13.0).color(Self::c_text()),
+                        value,
+                    );
+                } else {
+                    ui.label(egui::RichText::new(value).size(13.0).color(Self::c_text()));
+                }
+            });
+            ui.add_space(6.0);
+        }
+
+        ui.add_space(16.0);
+        ui.vertical_centered(|ui| {
+            if ui.add(Self::secondary_button(tr.back)).clicked() {
+                self.state = AppState::Login;
+            }
+        });
+    }
+}
+
 // Global message overlay
 impl DnfLoginApp {
     fn show_message(&self, ui: &mut egui::Ui) {
-        if self.state == AppState::Settings {
+        if self.state == AppState::Settings || self.state == AppState::About {
             return;
         }
 
@@ -1902,6 +1973,7 @@ impl eframe::App for DnfLoginApp {
                     AppState::Register => self.show_register_screen(ui),
                     AppState::ChangePassword => self.show_change_password_screen(ui),
                     AppState::Settings => self.show_settings_screen(ui),
+                    AppState::About => self.show_about_screen(ui),
                 }
                 self.show_message(ui);
             });

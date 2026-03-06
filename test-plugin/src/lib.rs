@@ -4,6 +4,7 @@
 //! basic process information to confirm that injection succeeded.
 
 #![allow(non_snake_case)]
+#![allow(clippy::upper_case_acronyms)]
 
 use std::path::Path;
 
@@ -118,8 +119,13 @@ fn on_attach(hmodule: HMODULE) {
     let _ = std::fs::write(&log_path, log.as_bytes());
 }
 
-// SAFETY: called by the OS loader under the loader lock; re-entrancy is not
-// expected at DLL_PROCESS_ATTACH.
+/// DLL entry point called by the OS loader.
+///
+/// # Safety
+///
+/// Called under the loader lock; re-entrancy is not expected at
+/// `DLL_PROCESS_ATTACH`. OS loader guarantees that `hmodule` is
+/// a valid module handle for the duration of this call.
 #[unsafe(no_mangle)]
 pub unsafe extern "system" fn DllMain(
     hmodule: HMODULE,

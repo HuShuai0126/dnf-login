@@ -3,6 +3,14 @@
 A launcher for Dungeon & Fighter (DNF) written in Rust.
 
 
+> [!WARNING]
+> This launcher does not guarantee compatibility with other launchers. Accounts
+> registered elsewhere may not work here, and vice versa — be prepared for the
+> possibility that existing accounts become inaccessible after switching.
+>
+> The API is not yet stable and may change between versions. Not recommended for
+> production use.
+
 ## Features
 
 ### Server

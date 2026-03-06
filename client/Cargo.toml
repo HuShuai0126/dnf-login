@@ -21,7 +21,6 @@ eframe = { version = "0.33.3", default-features = false, features = ["default_fo
 image = { version = "0.25.9", default-features = false, features = ["jpeg"] }
 
 md5 = "0.8.0"
-rand.workspace = true
 toml = "1.0.3"
 hex = "0.4.3"
 ico = "0.5.0"

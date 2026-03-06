@@ -136,6 +136,14 @@ pub struct Tr {
     pub login_success: &'static str,
     pub register_success: &'static str,
     pub change_password_success: &'static str,
+
+    // About screen
+    pub about_link: &'static str,
+    pub about_title: &'static str,
+    pub about_launcher_name_label: &'static str,
+    pub about_version_label: &'static str,
+    pub about_repo_label: &'static str,
+    pub about_author_label: &'static str,
 }
 
 pub fn translations(lang: Language) -> Tr {
@@ -238,6 +246,13 @@ const EN: Tr = Tr {
     login_success: "Login successful. Launching game\u{2026}",
     register_success: "Registration successful. Please log in.",
     change_password_success: "Password changed successfully. Please log in again.",
+
+    about_link: "About",
+    about_title: "About",
+    about_launcher_name_label: "LAUNCHER",
+    about_version_label: "VERSION",
+    about_repo_label: "REPOSITORY",
+    about_author_label: "AUTHOR",
 };
 
 // Simplified Chinese
@@ -330,6 +345,13 @@ const ZH_CN: Tr = Tr {
     login_success: "登录成功，正在启动游戏\u{2026}",
     register_success: "注册成功，请登录。",
     change_password_success: "密码已修改，请重新登录。",
+
+    about_link: "关于",
+    about_title: "关于",
+    about_launcher_name_label: "启动器",
+    about_version_label: "版本",
+    about_repo_label: "仓库",
+    about_author_label: "作者",
 };
 
 // Traditional Chinese
@@ -422,6 +444,13 @@ const ZH_TW: Tr = Tr {
     login_success: "登入成功，正在啟動遊戲\u{2026}",
     register_success: "註冊成功，請登入。",
     change_password_success: "密碼已修改，請重新登入。",
+
+    about_link: "關於",
+    about_title: "關於",
+    about_launcher_name_label: "啟動器",
+    about_version_label: "版本",
+    about_repo_label: "儲存庫",
+    about_author_label: "作者",
 };
 
 // Japanese
@@ -487,7 +516,7 @@ const JA: Tr = Tr {
     server_url_help: "接続先アドレスはサーバー管理者にお問い合わせください。",
     aes_key_label: "AESキー",
     aes_key_hint: "16進数64文字（32バイト）",
-    aes_key_help: "形式：16進数64文字（0\u{2013}9，a\u{2013}f）、32バイト。",
+    aes_key_help: "形式：16進数64文字（0\u{2013}9\u{3001}a\u{2013}f）、32バイト。",
     saved_config_label: "保存済み設定",
     not_configured: "未設定",
     clear_btn: "クリア",
@@ -514,6 +543,13 @@ const JA: Tr = Tr {
     login_success: "ログイン成功。ゲームを起動中\u{2026}",
     register_success: "登録完了。ログインしてください。",
     change_password_success: "パスワードを変更しました。再度ログインしてください。",
+
+    about_link: "バージョン情報",
+    about_title: "バージョン情報",
+    about_launcher_name_label: "ランチャー名",
+    about_version_label: "バージョン",
+    about_repo_label: "リポジトリ",
+    about_author_label: "作者",
 };
 
 // Korean
@@ -606,4 +642,11 @@ const KO: Tr = Tr {
     login_success: "로그인 성공. 게임을 시작합니다\u{2026}",
     register_success: "가입 완료. 로그인해 주세요.",
     change_password_success: "비밀번호가 변경되었습니다. 다시 로그인해 주세요.",
+
+    about_link: "정보",
+    about_title: "정보",
+    about_launcher_name_label: "런처",
+    about_version_label: "버전",
+    about_repo_label: "저장소",
+    about_author_label: "제작자",
 };
