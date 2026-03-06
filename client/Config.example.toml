@@ -1,14 +1,39 @@
 # DNF Launcher configuration example.
-# The active config file must be named Config.toml and placed in the same directory as the launcher.
+# Copy this file to Config.toml in the same directory as the launcher executable.
 
-# Server address.
-# Supports HTTP and HTTPS.
-# Example: "http://192.168.200.131:5505" or "https://dnf.example.com"
-# Contact the server administrator for the correct address.
-server_url = ""
+# Server address. Supports HTTP and HTTPS.
+# Contact the server administrator for the connection address.
+# Example: "http://192.168.200.131:5505"
+server_url = "http://192.168.200.131:5505"
 
-# AES encryption key.
+# AES encryption key shared with the server.
 # Must be exactly 64 hexadecimal characters (32 bytes).
-# Must match the server-side configuration exactly.
 # Contact the server administrator for the correct key.
-aes_key = ""
+aes_key = "your_64_character_hex_key_here_replace_with_real_key_xxxxxxxxxxx"
+
+# Display language.
+# Accepted values: "English", "ZhCn", "ZhTw", "Ja", "Ko"
+language = "ZhCn"
+
+# Directory scanned for JPG background images.
+# Path is relative to the launcher executable.
+bg_custom_path = "assets/bg"
+
+# When true, custom background images are listed before the built-in set.
+bg_custom_prepend = false
+
+# Background image scaling mode.
+# Accepted values: "Fill", "Fit", "Stretch", "Tile", "Center"
+#   Fill    — scale uniformly to cover the window, then center-crop
+#   Fit     — scale uniformly to fit within the window, letterboxing the remainder
+#   Stretch — stretch to fill the window, ignoring aspect ratio
+#   Tile    — repeat at original size without scaling
+#   Center  — display at original size, centered
+bg_fill_mode = "Fill"
+
+# Directory scanned for 32-bit DLL files to inject into DNF.exe at launch.
+# Path is relative to the launcher executable.
+plugins_dir = "plugins"
+
+# When false, the DLL injection step is skipped.
+plugin_inject_enabled = true

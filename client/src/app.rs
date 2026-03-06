@@ -100,6 +100,7 @@ pub struct DnfLoginApp {
     settings_aes_key: String,
     settings_bg_path: String,
     settings_plugins_dir: String,
+    settings_plugin_inject_enabled: bool,
 
     username: String,
     password: String,
@@ -295,6 +296,7 @@ impl DnfLoginApp {
         let settings_aes_key = config.aes_key.clone();
         let settings_bg_path = config.bg_custom_path.clone();
         let settings_plugins_dir = config.plugins_dir.clone();
+        let settings_plugin_inject_enabled = config.plugin_inject_enabled;
         let tr = translations(config.language);
         let cached_key_preview = Self::make_key_preview(&config.aes_key);
         let app_icon = Self::load_app_icon(&cc.egui_ctx);
@@ -328,6 +330,7 @@ impl DnfLoginApp {
             settings_aes_key,
             settings_bg_path,
             settings_plugins_dir,
+            settings_plugin_inject_enabled,
             username,
             password,
             remember_password,
@@ -1484,6 +1487,20 @@ impl DnfLoginApp {
             ui.add_space(1.0);
             ui.add_space(12.0);
 
+            ui.checkbox(
+                &mut self.settings_plugin_inject_enabled,
+                egui::RichText::new(tr.plugin_inject_label)
+                    .size(12.5)
+                    .color(Self::c_text2()),
+            );
+            ui.add_space(3.0);
+            ui.label(
+                egui::RichText::new(tr.plugin_inject_help)
+                    .size(11.0)
+                    .color(Self::c_text3()),
+            );
+            ui.add_space(10.0);
+
             ui.add(Self::text_input(
                 tr.plugins_dir_label,
                 &mut self.settings_plugins_dir,
@@ -1498,6 +1515,7 @@ impl DnfLoginApp {
             ui.add_space(10.0);
 
             if Self::primary_button_slim(ui, tr.save_btn, true) {
+                self.config.plugin_inject_enabled = self.settings_plugin_inject_enabled;
                 self.config.plugins_dir = self.settings_plugins_dir.trim().to_string();
                 let _ = self.config.save();
             }
@@ -2015,8 +2033,12 @@ impl DnfLoginApp {
                                 self.logged_in_user = Some(self.username.clone());
 
                                 let plugins_dir = self.config.plugins_dir.clone();
-                                if let Err(e) = DnfLauncher::launch_with_token(&token, &plugins_dir)
-                                {
+                                let inject_enabled = self.config.plugin_inject_enabled;
+                                if let Err(e) = DnfLauncher::launch_with_token(
+                                    &token,
+                                    &plugins_dir,
+                                    inject_enabled,
+                                ) {
                                     self.set_error(format!("{}: {}", tr.err_launch_prefix, e));
                                 } else {
                                     tracing::info!("Game launched: user={}", self.username);

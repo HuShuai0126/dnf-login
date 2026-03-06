@@ -91,7 +91,7 @@ pub fn is_process_running(process_name: &str) -> Result<bool> {
 }
 
 #[cfg(target_os = "windows")]
-pub fn launch_dnf(token: &str, plugins_dir: &str) -> Result<()> {
+pub fn launch_dnf(token: &str, plugins_dir: &str, inject_enabled: bool) -> Result<()> {
     use std::process::Command;
 
     let dnf_path = std::env::current_dir()?.join("DNF.exe");
@@ -113,7 +113,7 @@ pub fn launch_dnf(token: &str, plugins_dir: &str) -> Result<()> {
 
     tracing::info!("DNF launched (PID: {})", pid);
 
-    if let Err(e) = inject_plugins(pid, plugins_dir) {
+    if inject_enabled && let Err(e) = inject_plugins(pid, plugins_dir) {
         tracing::warn!("Plugin injection failed: {}", e);
     }
 

@@ -21,7 +21,7 @@ eframe = { version = "0.33.3", default-features = false, features = ["default_fo
 image = { version = "0.25.9", default-features = false, features = ["jpeg"] }
 
 md5 = "0.8.0"
-toml = "1.0.3"
+toml = "1.0.4"
 hex = "0.4.3"
 ico = "0.5.0"
 
