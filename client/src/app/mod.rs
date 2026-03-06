@@ -1,0 +1,351 @@
+use anyhow::Result;
+use eframe::egui;
+use std::sync::mpsc::{Receiver, Sender, channel};
+
+use crate::{
+    config::AppConfig, i18n::translations, network::DnfClient, storage::CredentialStorage,
+};
+
+mod bg;
+mod handlers;
+mod render;
+mod screens;
+mod theme;
+mod widgets;
+
+pub(super) const BG_IMAGES: &[(&str, &[u8])] = &[
+    ("bg1", include_bytes!("../../assets/bg1.jpg")),
+    ("bg2", include_bytes!("../../assets/bg2.jpg")),
+    ("bg3", include_bytes!("../../assets/bg3.jpg")),
+    ("bg4", include_bytes!("../../assets/bg4.jpg")),
+    ("bg5", include_bytes!("../../assets/bg5.jpg")),
+    ("bg6", include_bytes!("../../assets/bg6.jpg")),
+    ("bg7", include_bytes!("../../assets/bg7.jpg")),
+    ("bg8", include_bytes!("../../assets/bg8.jpg")),
+    ("bg9", include_bytes!("../../assets/bg9.jpg")),
+    ("bg10", include_bytes!("../../assets/bg10.jpg")),
+    ("bg11", include_bytes!("../../assets/bg11.jpg")),
+    ("bg12", include_bytes!("../../assets/bg12.jpg")),
+    ("bg13", include_bytes!("../../assets/bg13.jpg")),
+    ("bg14", include_bytes!("../../assets/bg14.jpg")),
+    ("bg15", include_bytes!("../../assets/bg15.jpg")),
+    ("bg16", include_bytes!("../../assets/bg16.jpg")),
+    ("bg17", include_bytes!("../../assets/bg17.jpg")),
+    ("bg18", include_bytes!("../../assets/bg18.jpg")),
+];
+
+pub(super) const THUMB_W: u32 = 64;
+pub(super) const THUMB_H: u32 = 36;
+
+/// Decoded pixel data for a single background, produced by worker threads and
+/// consumed on the main thread to upload GPU textures.
+pub(super) struct BgImageData {
+    pub(super) index: usize,
+    pub(super) full_image: egui::ColorImage,
+    pub(super) thumb_image: egui::ColorImage,
+}
+
+#[derive(PartialEq, Clone, Copy)]
+pub(super) enum AppState {
+    Login,
+    Register,
+    ChangePassword,
+    Settings,
+    About,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub(super) enum TaskType {
+    Login,
+    Register,
+    ChangePassword,
+}
+
+pub(super) enum TaskResult {
+    Login(Result<crate::network::LoginResponse>),
+    Register(Result<crate::network::RegisterResponse>),
+    ChangePassword(Result<crate::network::SimpleResponse>),
+}
+
+pub struct DnfLoginApp {
+    pub(super) config: AppConfig,
+    pub(super) client: Option<DnfClient>,
+    pub(super) storage: CredentialStorage,
+    pub(super) runtime: tokio::runtime::Runtime,
+    pub(super) task_rx: Receiver<TaskResult>,
+    pub(super) task_tx: Sender<TaskResult>,
+
+    // Translation table for the active language; refreshed on language change.
+    pub(super) tr: crate::i18n::Tr,
+    // Application icon texture decoded from the embedded ICO file.
+    pub(super) app_icon: Option<egui::TextureHandle>,
+
+    // Full-resolution background textures scaled to the window size.
+    pub(super) bgs: Vec<Option<egui::TextureHandle>>,
+    // Thumbnail textures for the background switcher strip.
+    pub(super) bg_thumbs: Vec<Option<egui::TextureHandle>>,
+    // Index of the currently displayed background.
+    pub(super) current_bg: usize,
+    // Horizontal scroll offset (pixels) of the thumbnail strip.
+    pub(super) thumb_scroll_offset: f32,
+    // Receives decoded background images from worker threads for GPU upload.
+    pub(super) img_rx: Receiver<BgImageData>,
+    // Set to true after the first frame triggers background loading.
+    pub(super) bg_loading_started: bool,
+
+    pub(super) state: AppState,
+    pub(super) current_task: Option<TaskType>,
+
+    pub(super) settings_server_url: String,
+    pub(super) settings_aes_key: String,
+    pub(super) settings_bg_path: String,
+    pub(super) settings_plugins_dir: String,
+    pub(super) settings_plugin_inject_enabled: bool,
+
+    pub(super) username: String,
+    pub(super) password: String,
+    pub(super) remember_password: bool,
+
+    pub(super) register_username: String,
+    pub(super) register_password: String,
+    pub(super) register_password_confirm: String,
+    pub(super) register_qq: String,
+
+    pub(super) changepwd_username: String,
+    pub(super) changepwd_old_password: String,
+    pub(super) changepwd_new_password: String,
+    pub(super) changepwd_confirm: String,
+
+    pub(super) message: Option<String>,
+    pub(super) message_is_error: bool,
+
+    pub(super) logged_in_user: Option<String>,
+    pub(super) login_token: Option<String>,
+}
+
+// Setup
+impl DnfLoginApp {
+    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
+        Self::try_load_cjk_font(&cc.egui_ctx);
+
+        let mut style = (*cc.egui_ctx.style()).clone();
+        style.text_styles.insert(
+            egui::TextStyle::Body,
+            egui::FontId::new(14.5, egui::FontFamily::Proportional),
+        );
+        style.text_styles.insert(
+            egui::TextStyle::Button,
+            egui::FontId::new(14.0, egui::FontFamily::Proportional),
+        );
+        style.text_styles.insert(
+            egui::TextStyle::Heading,
+            egui::FontId::new(22.0, egui::FontFamily::Proportional),
+        );
+        style.text_styles.insert(
+            egui::TextStyle::Small,
+            egui::FontId::new(11.5, egui::FontFamily::Proportional),
+        );
+        style.spacing.item_spacing = egui::vec2(8.0, 5.0);
+        style.spacing.button_padding = egui::vec2(14.0, 6.0);
+        style.spacing.text_edit_width = 220.0;
+        cc.egui_ctx.set_style(style);
+
+        cc.egui_ctx.set_theme(egui::ThemePreference::Dark);
+
+        let mut v = egui::Visuals::dark();
+        v.panel_fill = Self::c_bg();
+        v.window_fill = Self::c_bg();
+        v.extreme_bg_color = Self::c_input_bg();
+        v.faint_bg_color = Self::c_card();
+
+        v.widgets.noninteractive.bg_fill = Self::c_card();
+        v.widgets.noninteractive.bg_stroke = egui::Stroke::new(1.0, Self::c_border());
+        v.widgets.noninteractive.fg_stroke = egui::Stroke::new(1.0, Self::c_text2());
+
+        v.widgets.inactive.bg_fill = Self::c_input_bg();
+        v.widgets.inactive.bg_stroke = egui::Stroke::new(1.0, Self::c_border_dim());
+        v.widgets.inactive.fg_stroke = egui::Stroke::new(1.0, Self::c_text2());
+
+        v.widgets.hovered.bg_fill = egui::Color32::from_rgb(26, 30, 40);
+        v.widgets.hovered.bg_stroke = egui::Stroke::new(1.5, Self::c_accent());
+        v.widgets.hovered.fg_stroke = egui::Stroke::new(1.5, Self::c_text());
+
+        v.widgets.active.bg_fill = Self::c_accent_faint();
+        v.widgets.active.bg_stroke = egui::Stroke::new(1.5, Self::c_accent());
+        v.widgets.active.fg_stroke = egui::Stroke::new(1.5, egui::Color32::WHITE);
+
+        v.selection.bg_fill = Self::c_accent_faint();
+        v.selection.stroke = egui::Stroke::new(1.0, Self::c_accent());
+
+        v.hyperlink_color = Self::c_accent();
+        v.text_cursor.stroke.color = Self::c_accent();
+        // Explicitly target the dark theme style so the override survives system-theme events.
+        cc.egui_ctx.set_visuals_of(egui::Theme::Dark, v);
+
+        let config = AppConfig::load().unwrap_or_else(|e| {
+            tracing::warn!("Failed to load config, using default: {}", e);
+            AppConfig::default()
+        });
+
+        let client: Option<DnfClient> = if config.is_configured() {
+            match config.get_aes_key_bytes() {
+                Ok(key) => DnfClient::new(config.server_url.clone(), &key).ok(),
+                Err(e) => {
+                    tracing::error!("AES key parse error: {}", e);
+                    None
+                }
+            }
+        } else {
+            None
+        };
+
+        let storage = CredentialStorage::new().expect("Failed to create credential storage");
+        let runtime = tokio::runtime::Runtime::new().expect("Failed to create tokio runtime");
+        let (task_tx, task_rx) = channel();
+
+        let (username, password, remember_password) = if storage.has_saved_credentials() {
+            if let Ok((u, p)) = storage.load() {
+                (u, p, true)
+            } else {
+                (String::new(), String::new(), false)
+            }
+        } else {
+            (String::new(), String::new(), false)
+        };
+
+        let settings_server_url = config.server_url.clone();
+        let settings_aes_key = config.aes_key.clone();
+        let settings_bg_path = config.bg_custom_path.clone();
+        let settings_plugins_dir = config.plugins_dir.clone();
+        let settings_plugin_inject_enabled = config.plugin_inject_enabled;
+        let tr = translations(config.language);
+        let app_icon = Self::load_app_icon(&cc.egui_ctx);
+
+        let n = BG_IMAGES.len();
+        let bgs = vec![None; n];
+        let bg_thumbs = vec![None; n];
+        // Sender is dropped immediately, leaving a disconnected receiver.
+        // start_bg_loading() replaces it on the first update() frame.
+        let (_, img_rx) = channel::<BgImageData>();
+
+        Self {
+            config,
+            client,
+            storage,
+            runtime,
+            task_tx,
+            task_rx,
+            tr,
+            app_icon,
+            bgs,
+            bg_thumbs,
+            current_bg: 0,
+            thumb_scroll_offset: 0.0,
+            img_rx,
+            bg_loading_started: false,
+            state: AppState::Login,
+            current_task: None,
+            settings_server_url,
+            settings_aes_key,
+            settings_bg_path,
+            settings_plugins_dir,
+            settings_plugin_inject_enabled,
+            username,
+            password,
+            remember_password,
+            register_username: String::new(),
+            register_password: String::new(),
+            register_password_confirm: String::new(),
+            register_qq: String::new(),
+            changepwd_username: String::new(),
+            changepwd_old_password: String::new(),
+            changepwd_new_password: String::new(),
+            changepwd_confirm: String::new(),
+            message: None,
+            message_is_error: false,
+            logged_in_user: None,
+            login_token: None,
+        }
+    }
+}
+
+// eframe::App
+impl eframe::App for DnfLoginApp {
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        if let Ok(result) = self.task_rx.try_recv() {
+            self.handle_task_result(result);
+        }
+
+        // Kick off background loading once on the first frame.
+        if !self.bg_loading_started {
+            self.bg_loading_started = true;
+            self.start_bg_loading();
+        }
+
+        // Upload background textures decoded by worker threads.
+        let mut loaded_any = false;
+        while let Ok(data) = self.img_rx.try_recv() {
+            let i = data.index;
+            if i < self.bgs.len() {
+                self.bgs[i] = Some(ctx.load_texture(
+                    format!("bg_{i}"),
+                    data.full_image,
+                    egui::TextureOptions::LINEAR,
+                ));
+                self.bg_thumbs[i] = Some(ctx.load_texture(
+                    format!("thumb_{i}"),
+                    data.thumb_image,
+                    egui::TextureOptions::LINEAR,
+                ));
+                loaded_any = true;
+            }
+        }
+        // Keep repainting until all backgrounds are loaded.
+        if loaded_any || self.bgs.iter().any(|b| b.is_none()) {
+            ctx.request_repaint();
+        }
+
+        let screen = ctx.viewport_rect();
+
+        // Background image and thumbnail strip.
+        egui::CentralPanel::default()
+            .frame(egui::Frame::NONE)
+            .show(ctx, |ui| {
+                self.paint_background(ui, screen);
+                self.draw_thumbnail_strip(ui, screen);
+            });
+
+        // Glass card floated above the background panel.
+        let glass = egui::Frame::new()
+            .fill(Self::c_glass_fill())
+            .stroke(egui::Stroke::new(1.0, Self::c_glass_border()))
+            .corner_radius(egui::CornerRadius::same(14))
+            .inner_margin(egui::vec2(24.0, 18.0));
+
+        let max_card_h = screen.height() - 68.0;
+
+        egui::Window::new("dnf_card")
+            .title_bar(false)
+            .resizable(false)
+            .movable(false)
+            .min_width(400.0)
+            .max_width(400.0)
+            .max_height(max_card_h)
+            .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, -22.0))
+            .frame(glass)
+            .show(ctx, |ui| {
+                match self.state {
+                    AppState::Login => self.show_login_screen(ui),
+                    AppState::Register => self.show_register_screen(ui),
+                    AppState::ChangePassword => self.show_change_password_screen(ui),
+                    AppState::Settings => self.show_settings_screen(ui),
+                    AppState::About => self.show_about_screen(ui),
+                }
+                self.show_message(ui);
+            });
+
+        if self.current_task.is_some() {
+            ctx.request_repaint();
+        }
+    }
+}

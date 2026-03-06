@@ -1,0 +1,302 @@
+use super::{DnfLoginApp, TaskResult, TaskType};
+use crate::{
+    config::AppConfig,
+    game::DnfLauncher,
+    i18n::translations,
+    network::{DnfClient, md5_hash},
+    platform,
+};
+
+// Action handlers
+impl DnfLoginApp {
+    pub(super) fn handle_login(&mut self) {
+        self.message = None;
+        self.message_is_error = false;
+        let tr = self.t();
+
+        if !self.config.is_configured() {
+            self.set_error(tr.err_server_not_configured);
+            return;
+        }
+        if self.username.is_empty() || self.password.is_empty() {
+            self.set_error(tr.err_enter_username_password);
+            return;
+        }
+
+        let mac_address = match platform::get_mac_address() {
+            Ok(mac) => mac,
+            Err(e) => {
+                self.set_error(format!("{}: {}", tr.err_mac_prefix, e));
+                return;
+            }
+        };
+
+        let password_md5 = md5_hash(&self.password);
+
+        let client = match self.client.clone() {
+            Some(c) => c,
+            None => {
+                self.set_error(tr.err_client_not_init);
+                return;
+            }
+        };
+
+        self.current_task = Some(TaskType::Login);
+
+        let username = self.username.clone();
+        let tx = self.task_tx.clone();
+
+        tracing::info!(
+            "Login task started: user={}, mac={}",
+            self.username,
+            mac_address
+        );
+
+        self.runtime.spawn(async move {
+            let result = client.login(&username, &password_md5, &mac_address).await;
+            let _ = tx.send(TaskResult::Login(result));
+        });
+    }
+
+    pub(super) fn handle_register(&mut self) {
+        self.message = None;
+        self.message_is_error = false;
+        let tr = self.t();
+
+        if !self.config.is_configured() {
+            self.set_error(tr.err_server_not_configured);
+            return;
+        }
+        if self.register_username.is_empty() {
+            self.set_error(tr.err_enter_username);
+            return;
+        }
+        if self.register_password.is_empty() {
+            self.set_error(tr.err_enter_password);
+            return;
+        }
+        if self.register_password != self.register_password_confirm {
+            self.set_error(tr.err_passwords_no_match);
+            return;
+        }
+
+        let password_md5 = md5_hash(&self.register_password);
+        let qq = if self.register_qq.is_empty() {
+            None
+        } else {
+            Some(self.register_qq.clone())
+        };
+
+        let client = match self.client.clone() {
+            Some(c) => c,
+            None => {
+                self.set_error(tr.err_client_not_init);
+                return;
+            }
+        };
+
+        self.current_task = Some(TaskType::Register);
+
+        let username = self.register_username.clone();
+        let tx = self.task_tx.clone();
+
+        self.runtime.spawn(async move {
+            let result = client.register(&username, &password_md5, qq).await;
+            let _ = tx.send(TaskResult::Register(result));
+        });
+
+        tracing::info!("Register task started: user={}", self.register_username);
+    }
+
+    pub(super) fn handle_change_password(&mut self) {
+        self.message = None;
+        self.message_is_error = false;
+        let tr = self.t();
+
+        if !self.config.is_configured() {
+            self.set_error(tr.err_server_not_configured);
+            return;
+        }
+        if self.changepwd_username.is_empty() {
+            self.set_error(tr.err_enter_username);
+            return;
+        }
+        if self.changepwd_old_password.is_empty() {
+            self.set_error(tr.err_enter_old_password);
+            return;
+        }
+        if self.changepwd_new_password.is_empty() {
+            self.set_error(tr.err_enter_new_password);
+            return;
+        }
+        if self.changepwd_new_password != self.changepwd_confirm {
+            self.set_error(tr.err_passwords_no_match);
+            return;
+        }
+
+        let old_md5 = md5_hash(&self.changepwd_old_password);
+        let new_md5 = md5_hash(&self.changepwd_new_password);
+
+        let client = match self.client.clone() {
+            Some(c) => c,
+            None => {
+                self.set_error(tr.err_client_not_init);
+                return;
+            }
+        };
+
+        self.current_task = Some(TaskType::ChangePassword);
+
+        let username = self.changepwd_username.clone();
+        let tx = self.task_tx.clone();
+
+        self.runtime.spawn(async move {
+            let result = client.change_password(&username, &old_md5, &new_md5).await;
+            let _ = tx.send(TaskResult::ChangePassword(result));
+        });
+
+        tracing::info!(
+            "Change password task started: user={}",
+            self.changepwd_username
+        );
+    }
+
+    pub(super) fn handle_save_settings(&mut self) {
+        self.message = None;
+        self.message_is_error = false;
+        let tr = self.t();
+
+        let new_config = AppConfig {
+            server_url: self.settings_server_url.trim().to_string(),
+            aes_key: self.settings_aes_key.trim().to_string(),
+            plugins_dir: self.settings_plugins_dir.trim().to_string(),
+            plugin_inject_enabled: self.settings_plugin_inject_enabled,
+            ..self.config.clone()
+        };
+
+        if let Err(e) = new_config.validate() {
+            self.set_error(format!("{}: {}", tr.err_config_prefix, e));
+            return;
+        }
+        if let Err(e) = new_config.save() {
+            self.set_error(format!("{}: {}", tr.err_save_prefix, e));
+            return;
+        }
+
+        self.config = new_config;
+        self.settings_server_url = self.config.server_url.clone();
+        self.settings_aes_key = self.config.aes_key.clone();
+        self.tr = translations(self.config.language);
+
+        match self.config.get_aes_key_bytes() {
+            Ok(key) => match DnfClient::new(self.config.server_url.clone(), &key) {
+                Ok(client) => {
+                    self.client = Some(client);
+                    self.set_success(tr.settings_saved);
+                }
+                Err(e) => self.set_error(format!("Failed to initialize network client: {}", e)),
+            },
+            Err(e) => self.set_error(format!("Failed to parse AES key: {}", e)),
+        }
+    }
+
+    pub(super) fn handle_task_result(&mut self, result: TaskResult) {
+        let tr = self.t();
+        match result {
+            TaskResult::Login(res) => {
+                self.current_task = None;
+                match res {
+                    Ok(response) => {
+                        if response.success {
+                            if let Some(token) = response.token {
+                                if let Err(e) = self.storage.save(
+                                    &self.username,
+                                    &self.password,
+                                    self.remember_password,
+                                ) {
+                                    tracing::warn!("Failed to save credentials: {}", e);
+                                }
+                                // Clear the in-memory plaintext password.
+                                self.password = String::new();
+                                // Restore from storage now so re-launch works regardless of
+                                // whether the launch call below succeeds or fails.
+                                if self.remember_password
+                                    && let Ok((_, p)) = self.storage.load()
+                                {
+                                    self.password = p;
+                                }
+                                self.set_success(tr.login_success);
+                                self.login_token = Some(token.clone());
+                                self.logged_in_user = Some(self.username.clone());
+
+                                let plugins_dir = self.config.plugins_dir.clone();
+                                let inject_enabled = self.config.plugin_inject_enabled;
+                                if let Err(e) = DnfLauncher::launch_with_token(
+                                    &token,
+                                    &plugins_dir,
+                                    inject_enabled,
+                                ) {
+                                    self.set_error(format!("{}: {}", tr.err_launch_prefix, e));
+                                } else {
+                                    tracing::info!("Game launched: user={}", self.username);
+                                    self.message = None;
+                                }
+                            } else {
+                                // Server reported success but returned no token; treat as an error.
+                                tracing::error!("Login response: success=true but token is absent");
+                                self.set_error(tr.err_network_prefix.to_string());
+                            }
+                        } else {
+                            self.set_error(
+                                response.error.unwrap_or_else(|| "Login failed".to_string()),
+                            );
+                        }
+                    }
+                    Err(e) => self.set_error(format!("{}: {}", tr.err_network_prefix, e)),
+                }
+            }
+            TaskResult::Register(res) => {
+                self.current_task = None;
+                match res {
+                    Ok(response) => {
+                        if response.success {
+                            self.set_success(tr.register_success);
+                            self.register_username.clear();
+                            self.register_password.clear();
+                            self.register_password_confirm.clear();
+                            self.register_qq.clear();
+                        } else {
+                            self.set_error(
+                                response
+                                    .error
+                                    .unwrap_or_else(|| "Registration failed".to_string()),
+                            );
+                        }
+                    }
+                    Err(e) => self.set_error(format!("{}: {}", tr.err_network_prefix, e)),
+                }
+            }
+            TaskResult::ChangePassword(res) => {
+                self.current_task = None;
+                match res {
+                    Ok(response) => {
+                        if response.success {
+                            self.set_success(tr.change_password_success);
+                            self.changepwd_username.clear();
+                            self.changepwd_old_password.clear();
+                            self.changepwd_new_password.clear();
+                            self.changepwd_confirm.clear();
+                        } else {
+                            self.set_error(
+                                response
+                                    .error
+                                    .unwrap_or_else(|| "Password change failed".to_string()),
+                            );
+                        }
+                    }
+                    Err(e) => self.set_error(format!("{}: {}", tr.err_network_prefix, e)),
+                }
+            }
+        }
+    }
+}
