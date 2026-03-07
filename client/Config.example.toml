@@ -9,7 +9,7 @@ server_url = "http://192.168.200.131:5505"
 # AES encryption key shared with the server.
 # Must be exactly 64 hexadecimal characters (32 bytes).
 # Contact the server administrator for the correct key.
-aes_key = "your_64_character_hex_key_here_replace_with_real_key_xxxxxxxxxxx"
+aes_key = "a1b2c3d4e5f6789012345678901234567890abcdef0123456789abcdef012345"
 
 # Display language.
 # Accepted values: "English", "ZhCn", "ZhTw", "Ja", "Ko"
