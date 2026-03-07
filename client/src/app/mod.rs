@@ -89,7 +89,10 @@ pub struct DnfLoginApp {
     // Horizontal scroll offset (pixels) of the thumbnail strip.
     pub(super) thumb_scroll_offset: f32,
     // Receives decoded background images from worker threads for GPU upload.
-    pub(super) img_rx: Receiver<BgImageData>,
+    // `None` indicates a failed decode; one message is sent per task.
+    pub(super) img_rx: Receiver<Option<BgImageData>>,
+    // Number of background decode tasks still in flight.
+    pub(super) bg_pending: usize,
     // Set to true after the first frame triggers background loading.
     pub(super) bg_loading_started: bool,
 
@@ -118,9 +121,6 @@ pub struct DnfLoginApp {
 
     pub(super) message: Option<String>,
     pub(super) message_is_error: bool,
-
-    pub(super) logged_in_user: Option<String>,
-    pub(super) login_token: Option<String>,
 }
 
 // Setup
@@ -226,7 +226,7 @@ impl DnfLoginApp {
         let bg_thumbs = vec![None; n];
         // Sender is dropped immediately, leaving a disconnected receiver.
         // start_bg_loading() replaces it on the first update() frame.
-        let (_, img_rx) = channel::<BgImageData>();
+        let (_, img_rx) = channel::<Option<BgImageData>>();
 
         Self {
             config,
@@ -242,6 +242,7 @@ impl DnfLoginApp {
             current_bg: 0,
             thumb_scroll_offset: 0.0,
             img_rx,
+            bg_pending: 0,
             bg_loading_started: false,
             state: AppState::Login,
             current_task: None,
@@ -263,8 +264,6 @@ impl DnfLoginApp {
             changepwd_confirm: String::new(),
             message: None,
             message_is_error: false,
-            logged_in_user: None,
-            login_token: None,
         }
     }
 }
@@ -283,25 +282,29 @@ impl eframe::App for DnfLoginApp {
         }
 
         // Upload background textures decoded by worker threads.
+        // Workers send Some on success or None on failure, so bg_pending reaches zero either way.
         let mut loaded_any = false;
-        while let Ok(data) = self.img_rx.try_recv() {
-            let i = data.index;
-            if i < self.bgs.len() {
-                self.bgs[i] = Some(ctx.load_texture(
-                    format!("bg_{i}"),
-                    data.full_image,
-                    egui::TextureOptions::LINEAR,
-                ));
-                self.bg_thumbs[i] = Some(ctx.load_texture(
-                    format!("thumb_{i}"),
-                    data.thumb_image,
-                    egui::TextureOptions::LINEAR,
-                ));
-                loaded_any = true;
+        while let Ok(msg) = self.img_rx.try_recv() {
+            self.bg_pending = self.bg_pending.saturating_sub(1);
+            if let Some(data) = msg {
+                let i = data.index;
+                if i < self.bgs.len() {
+                    self.bgs[i] = Some(ctx.load_texture(
+                        format!("bg_{i}"),
+                        data.full_image,
+                        egui::TextureOptions::LINEAR,
+                    ));
+                    self.bg_thumbs[i] = Some(ctx.load_texture(
+                        format!("thumb_{i}"),
+                        data.thumb_image,
+                        egui::TextureOptions::LINEAR,
+                    ));
+                    loaded_any = true;
+                }
             }
         }
-        // Keep repainting until all backgrounds are loaded.
-        if loaded_any || self.bgs.iter().any(|b| b.is_none()) {
+        // Keep repainting while decode tasks are still in flight.
+        if loaded_any || self.bg_pending > 0 {
             ctx.request_repaint();
         }
 

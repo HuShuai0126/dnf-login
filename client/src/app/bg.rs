@@ -99,8 +99,9 @@ impl DnfLoginApp {
             self.current_bg = 0;
         }
 
-        let (img_tx, img_rx) = channel::<BgImageData>();
+        let (img_tx, img_rx) = channel::<Option<BgImageData>>();
         self.img_rx = img_rx;
+        self.bg_pending = n_total;
 
         let bg_w = 960u32;
         let bg_h = 540u32;
@@ -132,9 +133,7 @@ impl DnfLoginApp {
                     )
                 })
                 .await;
-                if let Ok(Some(data)) = result {
-                    let _ = tx.send(data);
-                }
+                let _ = tx.send(result.ok().flatten());
             });
         }
 
@@ -156,9 +155,7 @@ impl DnfLoginApp {
                     )
                 })
                 .await;
-                if let Ok(Some(data)) = result {
-                    let _ = tx.send(data);
-                }
+                let _ = tx.send(result.ok().flatten());
             });
         }
     }

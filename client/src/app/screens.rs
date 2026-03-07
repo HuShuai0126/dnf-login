@@ -89,8 +89,7 @@ impl DnfLoginApp {
         let sep = egui::Rect::from_min_size(ui.cursor().min, egui::vec2(ui.available_width(), 1.0));
         ui.painter()
             .rect_filled(sep, egui::CornerRadius::ZERO, Self::c_border());
-        ui.add_space(1.0);
-        ui.add_space(10.0);
+        ui.add_space(11.0);
 
         ui.columns(4, |cols| {
             cols[0].vertical_centered(|ui| {
@@ -202,8 +201,7 @@ impl DnfLoginApp {
         let sep = egui::Rect::from_min_size(ui.cursor().min, egui::vec2(ui.available_width(), 1.0));
         ui.painter()
             .rect_filled(sep, egui::CornerRadius::ZERO, Self::c_border());
-        ui.add_space(1.0);
-        ui.add_space(12.0);
+        ui.add_space(13.0);
 
         ui.horizontal(|ui| {
             if ui.add(Self::secondary_button(tr.back)).clicked() {
@@ -276,8 +274,7 @@ impl DnfLoginApp {
         let sep = egui::Rect::from_min_size(ui.cursor().min, egui::vec2(ui.available_width(), 1.0));
         ui.painter()
             .rect_filled(sep, egui::CornerRadius::ZERO, Self::c_border());
-        ui.add_space(1.0);
-        ui.add_space(12.0);
+        ui.add_space(13.0);
 
         ui.horizontal(|ui| {
             if ui.add(Self::secondary_button(tr.back)).clicked() {
@@ -378,8 +375,7 @@ impl DnfLoginApp {
                 egui::Rect::from_min_size(ui.cursor().min, egui::vec2(ui.available_width(), 1.0));
             ui.painter()
                 .rect_filled(sep, egui::CornerRadius::ZERO, Self::c_border());
-            ui.add_space(1.0);
-            ui.add_space(12.0);
+            ui.add_space(13.0);
 
             ui.add(Self::text_input(
                 tr.bg_custom_path_label,
@@ -481,8 +477,7 @@ impl DnfLoginApp {
                 egui::Rect::from_min_size(ui.cursor().min, egui::vec2(ui.available_width(), 1.0));
             ui.painter()
                 .rect_filled(sep, egui::CornerRadius::ZERO, Self::c_border());
-            ui.add_space(1.0);
-            ui.add_space(12.0);
+            ui.add_space(13.0);
 
             ui.checkbox(
                 &mut self.settings_plugin_inject_enabled,
@@ -601,7 +596,12 @@ impl DnfLoginApp {
                     .color(Self::c_text()),
             );
         });
-        ui.add_space(20.0);
+        ui.add_space(14.0);
+
+        let sep = egui::Rect::from_min_size(ui.cursor().min, egui::vec2(ui.available_width(), 1.0));
+        ui.painter()
+            .rect_filled(sep, egui::CornerRadius::ZERO, Self::c_border());
+        ui.add_space(15.0);
 
         let row_height = 22.0;
         let label_width = 90.0;
@@ -635,12 +635,21 @@ impl DnfLoginApp {
             ui.add_space(6.0);
         }
 
-        ui.add_space(16.0);
-        ui.vertical_centered(|ui| {
-            if ui.add(Self::secondary_button(tr.back)).clicked() {
-                self.state = AppState::Login;
-            }
-        });
+        ui.add_space(10.0);
+        let sep = egui::Rect::from_min_size(ui.cursor().min, egui::vec2(ui.available_width(), 1.0));
+        ui.painter()
+            .rect_filled(sep, egui::CornerRadius::ZERO, Self::c_border());
+        ui.add_space(13.0);
+
+        if ui
+            .add_sized(
+                egui::vec2(ui.available_width(), 36.0),
+                Self::secondary_button(tr.back),
+            )
+            .clicked()
+        {
+            self.state = AppState::Login;
+        }
     }
 }
 

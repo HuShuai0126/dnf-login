@@ -100,12 +100,12 @@ impl DnfLoginApp {
         let username = self.register_username.clone();
         let tx = self.task_tx.clone();
 
+        tracing::info!("Register task started: user={}", self.register_username);
+
         self.runtime.spawn(async move {
             let result = client.register(&username, &password_md5, qq).await;
             let _ = tx.send(TaskResult::Register(result));
         });
-
-        tracing::info!("Register task started: user={}", self.register_username);
     }
 
     pub(super) fn handle_change_password(&mut self) {
@@ -226,8 +226,6 @@ impl DnfLoginApp {
                                     self.password = p;
                                 }
                                 self.set_success(tr.login_success);
-                                self.login_token = Some(token.clone());
-                                self.logged_in_user = Some(self.username.clone());
 
                                 let plugins_dir = self.config.plugins_dir.clone();
                                 let inject_enabled = self.config.plugin_inject_enabled;
