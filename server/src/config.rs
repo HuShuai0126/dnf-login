@@ -1,7 +1,7 @@
 use anyhow::Result;
 use std::path::PathBuf;
 
-/// Database connection parameters (separate fields, no URL encoding needed)
+/// MySQL connection parameters.
 #[derive(Debug, Clone)]
 pub struct DbConfig {
     pub host: String,
@@ -30,6 +30,18 @@ pub struct Config {
 
     /// Starting cera_point balance granted to newly registered accounts.
     pub initial_cera_point: u32,
+
+    /// Path to the TLS certificate file in PEM format, may include intermediate CA certificates.
+    pub tls_cert_path: Option<PathBuf>,
+
+    /// Path to the TLS private key file in PEM format.
+    pub tls_key_path: Option<PathBuf>,
+
+    /// Bind address for the HTTPS listener (e.g., "0.0.0.0:5504").
+    pub tls_bind_address: String,
+
+    /// Disables the HTTP listener when TLS is active.
+    pub tls_only: bool,
 }
 
 impl Config {
@@ -48,6 +60,10 @@ impl Config {
     ///   BIND_ADDRESS         — listen address  (default: 0.0.0.0:5505)
     ///   INITIAL_CERA         — starting cera balance on registration (default: 1000)
     ///   INITIAL_CERA_POINT   — starting cera_point balance          (default: 0)
+    ///   TLS_CERT_PATH        — PEM certificate file, may include the full chain
+    ///   TLS_KEY_PATH         — PEM private key file
+    ///   TLS_BIND_ADDRESS     — HTTPS listen address (default: 0.0.0.0:5504)
+    ///   TLS_ONLY             — disable HTTP when TLS is active (default: false)
     pub fn from_env() -> Result<Self> {
         dotenvy::dotenv().ok();
 
@@ -103,6 +119,15 @@ impl Config {
             .and_then(|v| v.parse().ok())
             .unwrap_or(0u32);
 
+        let tls_cert_path = std::env::var("TLS_CERT_PATH").ok().map(PathBuf::from);
+        let tls_key_path = std::env::var("TLS_KEY_PATH").ok().map(PathBuf::from);
+        let tls_bind_address =
+            std::env::var("TLS_BIND_ADDRESS").unwrap_or_else(|_| "0.0.0.0:5504".to_string());
+        let tls_only = std::env::var("TLS_ONLY")
+            .ok()
+            .and_then(|v| v.parse::<bool>().ok())
+            .unwrap_or(false);
+
         Ok(Self {
             db,
             aes_key_hex,
@@ -110,6 +135,10 @@ impl Config {
             bind_address,
             initial_cera,
             initial_cera_point,
+            tls_cert_path,
+            tls_key_path,
+            tls_bind_address,
+            tls_only,
         })
     }
 }

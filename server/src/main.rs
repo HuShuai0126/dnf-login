@@ -3,6 +3,7 @@ use axum::{
     extract::DefaultBodyLimit,
     routing::{get, post},
 };
+use axum_server::tls_rustls::RustlsConfig;
 use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
@@ -65,17 +66,57 @@ async fn main() -> anyhow::Result<()> {
         .layer(TraceLayer::new_for_http())
         .with_state(state);
 
-    let addr: SocketAddr = config.bind_address.parse()?;
+    let http_addr: SocketAddr = config.bind_address.parse()?;
 
-    tracing::info!("Server starting on http://{}", addr);
-    tracing::warn!("TLS disabled -- use a reverse proxy (nginx/caddy) for HTTPS in production");
-
-    let listener = tokio::net::TcpListener::bind(addr).await?;
-    axum::serve(
-        listener,
-        app.into_make_service_with_connect_info::<SocketAddr>(),
-    )
-    .await?;
+    match (
+        config.tls_cert_path.as_deref(),
+        config.tls_key_path.as_deref(),
+    ) {
+        (Some(cert), Some(key)) => {
+            let tls_addr: SocketAddr = config.tls_bind_address.parse()?;
+            let tls_config = RustlsConfig::from_pem_file(cert, key).await?;
+            if config.tls_only {
+                tracing::info!("Listening on https://{}", tls_addr);
+                axum_server::bind_rustls(tls_addr, tls_config)
+                    .serve(app.into_make_service_with_connect_info::<SocketAddr>())
+                    .await?;
+            } else {
+                tracing::info!("Listening on http://{} and https://{}", http_addr, tls_addr);
+                let http_listener = tokio::net::TcpListener::bind(http_addr).await?;
+                tokio::select! {
+                    res = axum::serve(
+                        http_listener,
+                        app.clone().into_make_service_with_connect_info::<SocketAddr>(),
+                    ) => res?,
+                    res = axum_server::bind_rustls(tls_addr, tls_config)
+                        .serve(app.into_make_service_with_connect_info::<SocketAddr>()) => res?,
+                }
+            }
+        }
+        (Some(_), None) => {
+            anyhow::bail!("TLS_CERT_PATH is set but TLS_KEY_PATH is missing");
+        }
+        (None, Some(_)) => {
+            anyhow::bail!("TLS_KEY_PATH is set but TLS_CERT_PATH is missing");
+        }
+        (None, None) => {
+            if config.tls_only {
+                anyhow::bail!(
+                    "TLS_ONLY is set but TLS_CERT_PATH and TLS_KEY_PATH are not configured"
+                );
+            }
+            tracing::warn!(
+                "TLS is not configured. Set TLS_CERT_PATH and TLS_KEY_PATH to enable HTTPS."
+            );
+            tracing::info!("Listening on http://{}", http_addr);
+            let listener = tokio::net::TcpListener::bind(http_addr).await?;
+            axum::serve(
+                listener,
+                app.into_make_service_with_connect_info::<SocketAddr>(),
+            )
+            .await?;
+        }
+    }
 
     Ok(())
 }
