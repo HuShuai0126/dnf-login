@@ -60,18 +60,19 @@ cargo build --release -p dnf-client --target x86_64-pc-windows-gnu
 
 **Requirements:**
 
-- Linux host
+- Linux (x86_64, aarch64) or Windows (x86_64)
 - MySQL 5.x with an existing DNF database (`d_taiwan` and related schemas)
 - RSA private key matching the game's public key
 
 **Setup:**
 
-1. Copy `server/.env.example` to `server/.env` and fill in the values.
-2. Set `RSA_PRIVATE_KEY_PATH` in `server/.env` to the path of the RSA private key file.
-3. Start the server:
+1. Download the archive for your platform from the [Releases](https://github.com/llnut/dnf-login/releases) page and extract it.
+2. Copy `.env.example` (included in the archive) to `.env` in the same directory and fill in the required values.
+3. Place the RSA private key at `/data/privatekey.pem`, or set `RSA_PRIVATE_KEY_PATH` to an alternative path.
+4. Run the server:
 
 ```bash
-cd server && cargo run --release
+./dnf-gate-server
 ```
 
 **Configuration variables:**
@@ -85,15 +86,19 @@ cd server && cargo run --release
 | `DB_USER` | no | `game` | |
 | `DB_NAME` | no | `d_taiwan` | |
 | `RSA_PRIVATE_KEY_PATH` | no | `/data/privatekey.pem` | |
-| `BIND_ADDRESS` | no | `0.0.0.0:5505` | |
+| `BIND_ADDRESS` | no | `0.0.0.0:5505` | HTTP listener address. |
 | `INITIAL_CERA` | no | `1000` | |
 | `INITIAL_CERA_POINT` | no | `0` | |
+| `TLS_CERT_PATH` | no | | PEM certificate file (may include intermediate CA chain). TLS is enabled only when both `TLS_CERT_PATH` and `TLS_KEY_PATH` are set. |
+| `TLS_KEY_PATH` | no | | PEM private key file. |
+| `TLS_BIND_ADDRESS` | no | `0.0.0.0:5504` | HTTPS listener address. |
+| `TLS_ONLY` | no | `false` | When `true`, the HTTP listener is disabled. Requires TLS to be configured. |
 | `RUST_LOG` | no | `info` | e.g. `info,dnf_gate_server=debug` |
 
 
 ## Client Deployment
 
-1. Place the launcher executable in the game directory alongside `DNF.exe`.
+1. Download the archive for your platform from the [Releases](https://github.com/llnut/dnf-login/releases) page and extract the executable into the game directory alongside `DNF.exe`.
 2. Copy `Config.example.toml` to `Config.toml` in the same directory and set `server_url` and `aes_key`. These can also be configured from the in-app settings screen.
 
 ```toml

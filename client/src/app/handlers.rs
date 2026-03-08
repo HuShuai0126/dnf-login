@@ -237,7 +237,6 @@ impl DnfLoginApp {
                                     self.set_error(format!("{}: {}", tr.err_launch_prefix, e));
                                 } else {
                                     tracing::info!("Game launched: user={}", self.username);
-                                    self.message = None;
                                 }
                             } else {
                                 // Server reported success but returned no token; treat as an error.
