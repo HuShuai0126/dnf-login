@@ -37,8 +37,14 @@ unsafe extern "system" {
     fn GetEnvironmentVariableA(lpName: *const i8, lpBuffer: *mut i8, nSize: DWORD) -> DWORD;
     fn GetEnvironmentVariableW(lpName: *const u16, lpBuffer: *mut u16, nSize: DWORD) -> DWORD;
     fn GetModuleFileNameW(hModule: HMODULE, lpFilename: *mut u16, nSize: DWORD) -> DWORD;
-    fn FindFirstFileW(lpFileName: *const u16, lpFindFileData: *mut Win32FindDataW) -> *mut core::ffi::c_void;
-    fn FindNextFileW(hFindFile: *mut core::ffi::c_void, lpFindFileData: *mut Win32FindDataW) -> BOOL;
+    fn FindFirstFileW(
+        lpFileName: *const u16,
+        lpFindFileData: *mut Win32FindDataW,
+    ) -> *mut core::ffi::c_void;
+    fn FindNextFileW(
+        hFindFile: *mut core::ffi::c_void,
+        lpFindFileData: *mut Win32FindDataW,
+    ) -> BOOL;
     fn FindClose(hFindFile: *mut core::ffi::c_void) -> BOOL;
     fn CreateFileA(
         lpFileName: *const i8,
@@ -213,14 +219,25 @@ unsafe fn is_plugin_enabled() -> bool {
 /// Returns the length in u16 units, or 0 if not set.
 unsafe fn read_plugin_path_env(out: &mut [u16]) -> usize {
     let name: [u16; 16] = [
-        b'D' as u16, b'N' as u16, b'F' as u16, b'_' as u16,
-        b'P' as u16, b'L' as u16, b'U' as u16, b'G' as u16,
-        b'I' as u16, b'N' as u16, b'_' as u16, b'P' as u16,
-        b'A' as u16, b'T' as u16, b'H' as u16, 0,
+        b'D' as u16,
+        b'N' as u16,
+        b'F' as u16,
+        b'_' as u16,
+        b'P' as u16,
+        b'L' as u16,
+        b'U' as u16,
+        b'G' as u16,
+        b'I' as u16,
+        b'N' as u16,
+        b'_' as u16,
+        b'P' as u16,
+        b'A' as u16,
+        b'T' as u16,
+        b'H' as u16,
+        0,
     ];
-    let len = unsafe {
-        GetEnvironmentVariableW(name.as_ptr(), out.as_mut_ptr(), out.len() as DWORD)
-    };
+    let len =
+        unsafe { GetEnvironmentVariableW(name.as_ptr(), out.as_mut_ptr(), out.len() as DWORD) };
     if len == 0 || len as usize >= out.len() {
         return 0;
     }
@@ -241,8 +258,13 @@ unsafe fn build_plugin_path(hmodule: HMODULE, out: &mut [u16; 600]) -> usize {
     } else {
         // Default: "plugins"
         let default: [u16; 7] = [
-            b'p' as u16, b'l' as u16, b'u' as u16, b'g' as u16,
-            b'i' as u16, b'n' as u16, b's' as u16,
+            b'p' as u16,
+            b'l' as u16,
+            b'u' as u16,
+            b'g' as u16,
+            b'i' as u16,
+            b'n' as u16,
+            b's' as u16,
         ];
         env_path[..7].copy_from_slice(&default);
         (&env_path[..], 7usize)
@@ -255,7 +277,11 @@ unsafe fn build_plugin_path(hmodule: HMODULE, out: &mut [u16; 600]) -> usize {
     if is_absolute {
         let n = wcopy(&mut out[..], &dir_ptr[..path_len]);
         // Strip trailing backslash
-        let n = if n > 0 && out[n - 1] == b'\\' as u16 { n - 1 } else { n };
+        let n = if n > 0 && out[n - 1] == b'\\' as u16 {
+            n - 1
+        } else {
+            n
+        };
         out[n] = 0;
         return n;
     }
@@ -301,19 +327,29 @@ unsafe fn load_plugins(hmodule: HMODULE) {
     let mut path_ascii = [0u8; 256];
     let ascii_len = path_len.min(path_ascii.len());
     for i in 0..ascii_len {
-        path_ascii[i] = if path_buf[i] < 128 { path_buf[i] as u8 } else { b'?' };
+        path_ascii[i] = if path_buf[i] < 128 {
+            path_buf[i] as u8
+        } else {
+            b'?'
+        };
     }
     unsafe { log_line(&[b"[plugins] path=", &path_ascii[..ascii_len], b"\n"]) };
 
     // Build search pattern: dir\*.dll\0
     let mut pattern = [0u16; 620];
     let mut pos = wcopy(&mut pattern, &path_buf[..path_len]);
-    pattern[pos] = b'\\' as u16; pos += 1;
-    pattern[pos] = b'*' as u16; pos += 1;
-    pattern[pos] = b'.' as u16; pos += 1;
-    pattern[pos] = b'd' as u16; pos += 1;
-    pattern[pos] = b'l' as u16; pos += 1;
-    pattern[pos] = b'l' as u16; pos += 1;
+    pattern[pos] = b'\\' as u16;
+    pos += 1;
+    pattern[pos] = b'*' as u16;
+    pos += 1;
+    pattern[pos] = b'.' as u16;
+    pos += 1;
+    pattern[pos] = b'd' as u16;
+    pos += 1;
+    pattern[pos] = b'l' as u16;
+    pos += 1;
+    pattern[pos] = b'l' as u16;
+    pos += 1;
     pattern[pos] = 0;
 
     let mut fd = core::mem::MaybeUninit::<Win32FindDataW>::uninit();
@@ -336,10 +372,13 @@ unsafe fn load_plugins(hmodule: HMODULE) {
             let mut p = wcopy(&mut full, &path_buf[..path_len]);
             // Skip if path + backslash + filename + null would overflow
             if p + 1 + name_len >= full.len() {
-                if unsafe { FindNextFileW(hfind, fd.as_mut_ptr()) } == 0 { break; }
+                if unsafe { FindNextFileW(hfind, fd.as_mut_ptr()) } == 0 {
+                    break;
+                }
                 continue;
             }
-            full[p] = b'\\' as u16; p += 1;
+            full[p] = b'\\' as u16;
+            p += 1;
             p += wcopy(&mut full[p..], &fd_ref.c_file_name[..name_len]);
             full[p] = 0;
 
@@ -348,7 +387,10 @@ unsafe fn load_plugins(hmodule: HMODULE) {
             // Log filename as ASCII, best-effort
             let mut name_ascii = [0u8; 128];
             let na_len = name_len.min(name_ascii.len());
-            for (dst, &src) in name_ascii[..na_len].iter_mut().zip(&fd_ref.c_file_name[..na_len]) {
+            for (dst, &src) in name_ascii[..na_len]
+                .iter_mut()
+                .zip(&fd_ref.c_file_name[..na_len])
+            {
                 *dst = if src < 128 { src as u8 } else { b'?' };
             }
 
@@ -357,8 +399,11 @@ unsafe fn load_plugins(hmodule: HMODULE) {
             } else {
                 unsafe {
                     log_line(&[
-                        b"[plugins] loaded ", &name_ascii[..na_len],
-                        b" at 0x", &fmt_hex32(h as u32), b"\n",
+                        b"[plugins] loaded ",
+                        &name_ascii[..na_len],
+                        b" at 0x",
+                        &fmt_hex32(h as u32),
+                        b"\n",
                     ]);
                 }
                 count += 1;
@@ -377,12 +422,30 @@ unsafe fn load_plugins(hmodule: HMODULE) {
 
 // ijl15.dll export stubs, no-op to satisfy DLL interface contract
 
-#[unsafe(no_mangle)] pub extern "system" fn ijlInit() -> i32 { 0 }
-#[unsafe(no_mangle)] pub extern "system" fn ijlFree() -> i32 { 0 }
-#[unsafe(no_mangle)] pub extern "system" fn ijlRead() -> i32 { 0 }
-#[unsafe(no_mangle)] pub extern "system" fn ijlWrite() -> i32 { 0 }
-#[unsafe(no_mangle)] pub extern "system" fn ijlGetLibVersion() -> i32 { 0 }
-#[unsafe(no_mangle)] pub extern "system" fn ijlErrorStr() -> *const i8 { c"".as_ptr() }
+#[unsafe(no_mangle)]
+pub extern "system" fn ijlInit() -> i32 {
+    0
+}
+#[unsafe(no_mangle)]
+pub extern "system" fn ijlFree() -> i32 {
+    0
+}
+#[unsafe(no_mangle)]
+pub extern "system" fn ijlRead() -> i32 {
+    0
+}
+#[unsafe(no_mangle)]
+pub extern "system" fn ijlWrite() -> i32 {
+    0
+}
+#[unsafe(no_mangle)]
+pub extern "system" fn ijlGetLibVersion() -> i32 {
+    0
+}
+#[unsafe(no_mangle)]
+pub extern "system" fn ijlErrorStr() -> *const i8 {
+    c"".as_ptr()
+}
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -522,7 +585,8 @@ unsafe fn on_attach(hmodule: HMODULE) {
         unsafe {
             log_line(&[
                 b"[on_attach] gethostbyname=0x",
-                &fmt_hex32(gethostbyname_addr as u32), b"\n",
+                &fmt_hex32(gethostbyname_addr as u32),
+                b"\n",
             ]);
         }
         if gethostbyname_addr != 0 {

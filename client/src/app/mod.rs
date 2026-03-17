@@ -220,6 +220,7 @@ impl DnfLoginApp {
         let settings_plugins_path = config.plugins_path.clone();
         let settings_plugin_inject_enabled = config.plugin_inject_enabled;
         let settings_game_server_ip_enabled = config.game_server_ip_enabled;
+        let bg_index = config.bg_index;
         let tr = translations(config.language);
         let app_icon = Self::load_app_icon(&cc.egui_ctx);
 
@@ -241,7 +242,7 @@ impl DnfLoginApp {
             app_icon,
             bgs,
             bg_thumbs,
-            current_bg: 0,
+            current_bg: bg_index,
             thumb_scroll_offset: 0.0,
             img_rx,
             bg_pending: 0,

@@ -433,7 +433,10 @@ pub fn parse_ipv4(s: &[u8]) -> bool {
 ///
 /// Caller must validate with `parse_ipv4` first.
 pub fn parse_ipv4_octets(s: &[u8]) -> [u8; 4] {
-    debug_assert!(parse_ipv4(s), "parse_ipv4_octets: input is not a valid IPv4 address");
+    debug_assert!(
+        parse_ipv4(s),
+        "parse_ipv4_octets: input is not a valid IPv4 address"
+    );
     let mut octets = [0u8; 4];
     for (idx, part) in s.splitn(4, |&b| b == b'.').enumerate() {
         let mut val = 0u8;

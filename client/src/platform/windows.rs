@@ -126,20 +126,20 @@ pub fn launch_dnf(
     tracing::info!("DNF launched (PID: {})", pid);
 
     // Write launch diagnostics beside the launcher exe.
-    if let Ok(exe) = std::env::current_exe() {
-        if let Some(dir) = exe.parent() {
-            let content = format!(
-                "pid={}\ngame_server_ip={}\ninject_enabled={}\n",
-                pid,
-                if server_ip.is_empty() {
-                    "(none)"
-                } else {
-                    server_ip
-                },
-                inject_enabled,
-            );
-            let _ = std::fs::write(dir.join("launch.log"), content);
-        }
+    if let Ok(exe) = std::env::current_exe()
+        && let Some(dir) = exe.parent()
+    {
+        let content = format!(
+            "pid={}\ngame_server_ip={}\ninject_enabled={}\n",
+            pid,
+            if server_ip.is_empty() {
+                "(none)"
+            } else {
+                server_ip
+            },
+            inject_enabled,
+        );
+        let _ = std::fs::write(dir.join("launch.log"), content);
     }
 
     Ok(())

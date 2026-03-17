@@ -256,6 +256,10 @@ impl DnfLoginApp {
 
             if resp.clicked() {
                 self.current_bg = i;
+                self.config.bg_index = i;
+                if let Err(e) = self.config.save() {
+                    tracing::warn!("Failed to save bg_index: {}", e);
+                }
                 // Scroll the selected thumbnail into view.
                 let thumb_left = i as f32 * (tw + gap);
                 let thumb_right = thumb_left + tw;

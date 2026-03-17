@@ -33,6 +33,9 @@ pub struct AppConfig {
     pub bg_custom_prepend: bool,
     /// How background images are scaled to fill the window.
     pub bg_fill_mode: BgFillMode,
+    /// Index of the last selected background image.
+    #[serde(default)]
+    pub bg_index: usize,
     /// Plugin directory path passed to DNF.exe via environment variable.
     pub plugins_path: String,
     /// Controls the DNF_PLUGIN_ENABLED environment variable passed to DNF.exe.
@@ -56,6 +59,7 @@ impl Default for AppConfig {
             bg_custom_path: "assets/bg".to_string(),
             bg_custom_prepend: false,
             bg_fill_mode: BgFillMode::Fill,
+            bg_index: 0,
             plugins_path: "plugins".to_string(),
             plugin_inject_enabled: true,
             game_server_ip_enabled: true,
@@ -188,5 +192,31 @@ mod tests {
         config.aes_key =
             "gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg".to_string();
         assert!(config.get_aes_key_bytes().is_err());
+    }
+
+    #[test]
+    fn test_bg_index_defaults_when_absent() {
+        let toml_str = r#"
+server_url = ""
+aes_key = ""
+language = "en"
+bg_custom_path = "assets/bg"
+bg_custom_prepend = false
+bg_fill_mode = "Fill"
+plugins_path = "plugins"
+plugin_inject_enabled = true
+game_server_ip_enabled = true
+"#;
+        let config: AppConfig = toml::from_str(toml_str).unwrap();
+        assert_eq!(config.bg_index, 0);
+    }
+
+    #[test]
+    fn test_bg_index_round_trip() {
+        let mut config = AppConfig::default();
+        config.bg_index = 7;
+        let serialized = toml::to_string_pretty(&config).unwrap();
+        let deserialized: AppConfig = toml::from_str(&serialized).unwrap();
+        assert_eq!(deserialized.bg_index, 7);
     }
 }

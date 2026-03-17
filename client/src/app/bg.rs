@@ -95,7 +95,9 @@ impl DnfLoginApp {
 
         self.bgs = vec![None; n_total];
         self.bg_thumbs = vec![None; n_total];
-        if self.current_bg >= n_total {
+        // Fall back to the first image when the saved index is out of range.
+        // config.bg_index is intentionally left unchanged.
+        if n_total == 0 || self.current_bg >= n_total {
             self.current_bg = 0;
         }
 
