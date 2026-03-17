@@ -33,7 +33,7 @@ bg_fill_mode = "Fill"
 
 # Directory scanned for 32-bit DLL files to inject into DNF.exe at launch.
 # Path is relative to the launcher executable.
-plugins_dir = "plugins"
+plugins_path = "plugins"
 
 # When false, the DLL injection step is skipped.
 plugin_inject_enabled = true

@@ -1,0 +1,13 @@
+[package]
+name = "ijl15-hook"
+version.workspace = true
+edition.workspace = true
+
+[lib]
+name = "ijl15"
+crate-type = ["cdylib"]
+
+[dependencies]
+hook-common = { path = "../hook-common" }
+serde = { workspace = true }
+toml = { workspace = true }

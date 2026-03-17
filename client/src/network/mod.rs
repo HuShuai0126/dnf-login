@@ -96,6 +96,27 @@ impl DnfClient {
         }
     }
 
+    pub async fn get_game_server_ip(&self) -> Result<Option<String>> {
+        let response = self
+            .client
+            .get(format!("{}/api/v1/game-server-ip", self.server_url))
+            .send()
+            .await?;
+
+        if response.status() == reqwest::StatusCode::NOT_FOUND {
+            return Ok(None);
+        }
+        if !response.status().is_success() {
+            anyhow::bail!("HTTP error: {}", response.status());
+        }
+
+        let ip = response.text().await?;
+        let ip = ip.trim().to_string();
+        ip.parse::<std::net::IpAddr>()
+            .map_err(|_| anyhow::anyhow!("server returned invalid IP: {:?}", ip))?;
+        Ok(Some(ip))
+    }
+
     pub async fn change_password(
         &self,
         username: &str,
@@ -145,4 +166,42 @@ pub struct SimpleResponse {
 
 pub fn md5_hash(input: &str) -> String {
     format!("{:x}", md5::compute(input))
+}
+
+/// Resolves the host in `server_url` to an IPv4 address string.
+///
+/// If the host is already an IP literal, it is returned as-is without a DNS query.
+/// For domain names a DNS lookup is performed; the first IPv4 result is returned.
+pub async fn resolve_server_ip(server_url: &str) -> Option<String> {
+    let rest = server_url
+        .strip_prefix("https://")
+        .or_else(|| server_url.strip_prefix("http://"))?;
+    let authority = rest.split('/').next()?;
+
+    let host = if authority.starts_with('[') {
+        // IPv6 literal: [::1]:port → strip brackets
+        let end = authority.find(']')?;
+        authority[1..end].to_string()
+    } else {
+        match authority.rfind(':') {
+            Some(pos) => authority[..pos].to_string(),
+            None => authority.to_string(),
+        }
+    };
+
+    // Already an IP literal — return only if it is IPv4; gethostbyname does not support IPv6.
+    if let Ok(ip) = host.parse::<std::net::IpAddr>() {
+        return if ip.is_ipv4() {
+            Some(ip.to_string())
+        } else {
+            None
+        };
+    }
+
+    // Domain name — resolve and prefer the first IPv4 result.
+    tokio::net::lookup_host(format!("{}:0", host))
+        .await
+        .ok()?
+        .find(|a| a.ip().is_ipv4())
+        .map(|a| a.ip().to_string())
 }

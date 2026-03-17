@@ -494,13 +494,27 @@ impl DnfLoginApp {
             ui.add_space(10.0);
 
             ui.add(Self::text_input(
-                tr.plugins_dir_label,
-                &mut self.settings_plugins_dir,
-                tr.plugins_dir_hint,
+                tr.plugins_path_label,
+                &mut self.settings_plugins_path,
+                tr.plugins_path_hint,
             ));
             ui.add_space(3.0);
             ui.label(
-                egui::RichText::new(tr.plugins_dir_help)
+                egui::RichText::new(tr.plugins_path_help)
+                    .size(11.5)
+                    .color(Self::c_text3()),
+            );
+            ui.add_space(10.0);
+
+            ui.checkbox(
+                &mut self.settings_game_server_ip_enabled,
+                egui::RichText::new(tr.game_server_ip_label)
+                    .size(13.5)
+                    .color(Self::c_text2()),
+            );
+            ui.add_space(3.0);
+            ui.label(
+                egui::RichText::new(tr.game_server_ip_help)
                     .size(11.5)
                     .color(Self::c_text3()),
             );

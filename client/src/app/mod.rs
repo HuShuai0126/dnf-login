@@ -62,7 +62,7 @@ pub(super) enum TaskType {
 }
 
 pub(super) enum TaskResult {
-    Login(Result<crate::network::LoginResponse>),
+    Login(Result<crate::network::LoginResponse>, Option<String>),
     Register(Result<crate::network::RegisterResponse>),
     ChangePassword(Result<crate::network::SimpleResponse>),
 }
@@ -102,8 +102,9 @@ pub struct DnfLoginApp {
     pub(super) settings_server_url: String,
     pub(super) settings_aes_key: String,
     pub(super) settings_bg_path: String,
-    pub(super) settings_plugins_dir: String,
+    pub(super) settings_plugins_path: String,
     pub(super) settings_plugin_inject_enabled: bool,
+    pub(super) settings_game_server_ip_enabled: bool,
 
     pub(super) username: String,
     pub(super) password: String,
@@ -216,8 +217,9 @@ impl DnfLoginApp {
         let settings_server_url = config.server_url.clone();
         let settings_aes_key = config.aes_key.clone();
         let settings_bg_path = config.bg_custom_path.clone();
-        let settings_plugins_dir = config.plugins_dir.clone();
+        let settings_plugins_path = config.plugins_path.clone();
         let settings_plugin_inject_enabled = config.plugin_inject_enabled;
+        let settings_game_server_ip_enabled = config.game_server_ip_enabled;
         let tr = translations(config.language);
         let app_icon = Self::load_app_icon(&cc.egui_ctx);
 
@@ -249,8 +251,9 @@ impl DnfLoginApp {
             settings_server_url,
             settings_aes_key,
             settings_bg_path,
-            settings_plugins_dir,
+            settings_plugins_path,
             settings_plugin_inject_enabled,
+            settings_game_server_ip_enabled,
             username,
             password,
             remember_password,

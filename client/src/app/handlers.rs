@@ -45,6 +45,9 @@ impl DnfLoginApp {
 
         let username = self.username.clone();
         let tx = self.task_tx.clone();
+        let inject_enabled = self.config.plugin_inject_enabled;
+        let ip_enabled = self.config.game_server_ip_enabled;
+        let server_url = self.config.server_url.clone();
 
         tracing::info!(
             "Login task started: user={}, mac={}",
@@ -53,8 +56,28 @@ impl DnfLoginApp {
         );
 
         self.runtime.spawn(async move {
-            let result = client.login(&username, &password_md5, &mac_address).await;
-            let _ = tx.send(TaskResult::Login(result));
+            let (game_server_ip, result) = if inject_enabled && ip_enabled {
+                let (ip_res, resolve_res, login_res) = tokio::join!(
+                    client.get_game_server_ip(),
+                    crate::network::resolve_server_ip(&server_url),
+                    client.login(&username, &password_md5, &mac_address)
+                );
+                let ip = match ip_res {
+                    Ok(Some(ip)) => Some(ip),
+                    Ok(None) => resolve_res,
+                    Err(e) => {
+                        tracing::warn!("Failed to fetch game server IP: {}", e);
+                        resolve_res
+                    }
+                };
+                (ip, login_res)
+            } else {
+                (
+                    None,
+                    client.login(&username, &password_md5, &mac_address).await,
+                )
+            };
+            let _ = tx.send(TaskResult::Login(result, game_server_ip));
         });
     }
 
@@ -169,8 +192,9 @@ impl DnfLoginApp {
         let new_config = AppConfig {
             server_url: self.settings_server_url.trim().to_string(),
             aes_key: self.settings_aes_key.trim().to_string(),
-            plugins_dir: self.settings_plugins_dir.trim().to_string(),
+            plugins_path: self.settings_plugins_path.trim().to_string(),
             plugin_inject_enabled: self.settings_plugin_inject_enabled,
+            game_server_ip_enabled: self.settings_game_server_ip_enabled,
             ..self.config.clone()
         };
 
@@ -203,7 +227,7 @@ impl DnfLoginApp {
     pub(super) fn handle_task_result(&mut self, result: TaskResult) {
         let tr = self.t();
         match result {
-            TaskResult::Login(res) => {
+            TaskResult::Login(res, game_server_ip) => {
                 self.current_task = None;
                 match res {
                     Ok(response) => {
@@ -227,12 +251,14 @@ impl DnfLoginApp {
                                 }
                                 self.set_success(tr.login_success);
 
-                                let plugins_dir = self.config.plugins_dir.clone();
+                                let plugins_path = self.config.plugins_path.clone();
                                 let inject_enabled = self.config.plugin_inject_enabled;
+                                let server_ip = game_server_ip.unwrap_or_default();
                                 if let Err(e) = DnfLauncher::launch_with_token(
                                     &token,
-                                    &plugins_dir,
+                                    &plugins_path,
                                     inject_enabled,
+                                    &server_ip,
                                 ) {
                                     self.set_error(format!("{}: {}", tr.err_launch_prefix, e));
                                 } else {

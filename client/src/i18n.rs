@@ -85,10 +85,14 @@ pub struct Tr {
     pub bg_fill_center: &'static str,
     pub bg_fill_fit: &'static str,
 
-    // Settings screen — plugin directory
-    pub plugins_dir_label: &'static str,
-    pub plugins_dir_hint: &'static str,
-    pub plugins_dir_help: &'static str,
+    // Settings screen — game server IP
+    pub game_server_ip_label: &'static str,
+    pub game_server_ip_help: &'static str,
+
+    // Settings screen — plugin path
+    pub plugins_path_label: &'static str,
+    pub plugins_path_hint: &'static str,
+    pub plugins_path_help: &'static str,
     pub plugin_inject_label: &'static str,
     pub plugin_inject_help: &'static str,
 
@@ -203,11 +207,14 @@ const EN: Tr = Tr {
     bg_fill_center: "Center",
     bg_fill_fit: "Fit",
 
-    plugins_dir_label: "PLUGIN DIRECTORY",
-    plugins_dir_hint: "e.g. plugins",
-    plugins_dir_help: "DLL files in this folder are injected into DNF.exe at launch. Path is relative to the launcher executable.",
+    game_server_ip_label: "Set GAME_SERVER_IP on launch",
+    game_server_ip_help: "When enabled, the launcher fetches the game server IP and passes it to DNF.exe via the GAME_SERVER_IP environment variable.",
+
+    plugins_path_label: "PLUGIN PATH",
+    plugins_path_hint: "e.g. plugins",
+    plugins_path_help: "DLL files in this folder are injected into DNF.exe at launch. Path is relative to the launcher executable.",
     plugin_inject_label: "Enable DLL injection",
-    plugin_inject_help: "When enabled, DLL files in the plugin directory are injected into DNF.exe at launch.",
+    plugin_inject_help: "When enabled, DLL files in the plugin path are injected into DNF.exe at launch.",
 
     bg_custom_path_label: "CUSTOM WALLPAPER PATH",
     bg_custom_path_hint: "e.g. assets/bg",
@@ -286,7 +293,7 @@ const ZH_CN: Tr = Tr {
     hint_choose_username: "输入用户名",
     hint_choose_password: "输入密码",
     hint_re_enter_password: "再次输入密码",
-    hint_qq: "输入QQ号",
+    hint_qq: "输入 QQ 号",
     register_btn: "立即注册",
 
     change_password_title: "修改密码",
@@ -304,11 +311,14 @@ const ZH_CN: Tr = Tr {
     bg_fill_center: "居中",
     bg_fill_fit: "适应",
 
-    plugins_dir_label: "插件目录",
-    plugins_dir_hint: "例：plugins",
-    plugins_dir_help: "该目录中的 DLL 文件将在游戏启动时注入 DNF.exe，路径相对于启动器所在目录。",
+    game_server_ip_label: "启动时设置 GAME_SERVER_IP",
+    game_server_ip_help: "开启后，启动器将获取游戏服务器 IP 并通过环境变量 GAME_SERVER_IP 传递给 DNF.exe。",
+
+    plugins_path_label: "插件路径",
+    plugins_path_hint: "例：plugins",
+    plugins_path_help: "该目录中的 DLL 文件将在游戏启动时注入 DNF.exe，路径相对于启动器所在目录。",
     plugin_inject_label: "启用 DLL 注入",
-    plugin_inject_help: "开启后，游戏启动时将自动把插件目录中的 DLL 文件注入 DNF.exe。",
+    plugin_inject_help: "开启后，游戏启动时将自动把插件路径中的 DLL 文件注入 DNF.exe。",
 
     bg_custom_path_label: "自定义壁纸目录",
     bg_custom_path_hint: "例：assets/bg",
@@ -387,7 +397,7 @@ const ZH_TW: Tr = Tr {
     hint_choose_username: "輸入帳號",
     hint_choose_password: "輸入密碼",
     hint_re_enter_password: "再次輸入密碼",
-    hint_qq: "填入QQ號碼",
+    hint_qq: "輸入 QQ 號碼",
     register_btn: "立即註冊",
 
     change_password_title: "修改密碼",
@@ -400,24 +410,27 @@ const ZH_TW: Tr = Tr {
 
     bg_fill_mode_label: "顯示方式",
     bg_fill_tile: "並排",
-    bg_fill_stretch: "延伸",
+    bg_fill_stretch: "延展",
     bg_fill_fill: "填滿",
     bg_fill_center: "置中",
-    bg_fill_fit: "縮放至適合",
+    bg_fill_fit: "適合",
 
-    plugins_dir_label: "插件目錄",
-    plugins_dir_hint: "例：plugins",
-    plugins_dir_help: "該目錄中的 DLL 檔案將在遊戲啟動時注入 DNF.exe，路徑相對於啟動器所在目錄。",
+    game_server_ip_label: "啟動時設定 GAME_SERVER_IP",
+    game_server_ip_help: "啟用後，啟動器會取得遊戲伺服器 IP，並透過環境變數 GAME_SERVER_IP 傳遞給 DNF.exe。",
+
+    plugins_path_label: "插件路徑",
+    plugins_path_hint: "例：plugins",
+    plugins_path_help: "該目錄中的 DLL 檔案將在遊戲啟動時注入 DNF.exe，路徑相對於啟動器所在目錄。",
     plugin_inject_label: "啟用 DLL 注入",
-    plugin_inject_help: "開啟後，遊戲啟動時將自動把插件目錄中的 DLL 檔案注入 DNF.exe。",
+    plugin_inject_help: "開啟後，遊戲啟動時將自動把插件路徑中的 DLL 檔案注入 DNF.exe。",
 
-    bg_custom_path_label: "自訂壁紙目錄",
+    bg_custom_path_label: "自訂背景圖片路徑",
     bg_custom_path_hint: "例：assets/bg",
-    bg_custom_path_help: "目錄中所有 JPG 圖片將作為壁紙，路徑相對於程式所在目錄。",
+    bg_custom_path_help: "該路徑下的所有 JPG 圖片將作為背景，路徑相對於程式所在目錄。",
     bg_position_label: "插入位置",
     bg_position_append: "附加至末尾",
     bg_position_prepend: "插入至開頭",
-    bg_reload_btn: "重新載入壁紙",
+    bg_reload_btn: "重新載入背景",
 
     settings_title: "設定",
     server_url_label: "伺服器位址",
@@ -475,7 +488,7 @@ const JA: Tr = Tr {
     hint_username: "ユーザー名を入力",
     hint_password: "パスワードを入力",
 
-    remember_password: "パスワードを保存",
+    remember_password: "パスワードを記憶",
     enter_game: "ゲームを起動",
     signing_in: "ログイン中\u{2026}",
     register_link: "新規登録",
@@ -497,20 +510,23 @@ const JA: Tr = Tr {
     change_password_btn: "変更する",
     hint_current_password: "現在のパスワードを入力",
     hint_enter_new_password: "新しいパスワードを入力",
-    hint_confirm_new_password: "新しいパスワードをもう一度",
+    hint_confirm_new_password: "新しいパスワードをもう一度入力",
 
     bg_fill_mode_label: "表示方法",
     bg_fill_tile: "並べて表示",
     bg_fill_stretch: "拡大して表示",
-    bg_fill_fill: "ズーム",
+    bg_fill_fill: "フィル",
     bg_fill_center: "中央に表示",
     bg_fill_fit: "画面に合わせる",
 
-    plugins_dir_label: "プラグインフォルダ",
-    plugins_dir_hint: "例：plugins",
-    plugins_dir_help: "フォルダ内の DLL ファイルは、ゲーム起動時に DNF.exe へ注入されます。パスはランチャー実行ファイルからの相対パスです。",
+    game_server_ip_label: "起動時に GAME_SERVER_IP を設定",
+    game_server_ip_help: "有効にすると、ランチャーがゲームサーバーの IP を取得し、環境変数 GAME_SERVER_IP として DNF.exe に渡します。",
+
+    plugins_path_label: "プラグインパス",
+    plugins_path_hint: "例：plugins",
+    plugins_path_help: "フォルダ内の DLL ファイルは、ゲーム起動時に DNF.exe へ注入されます。パスはランチャー実行ファイルからの相対パスです。",
     plugin_inject_label: "DLL インジェクションを有効化",
-    plugin_inject_help: "有効にすると、ゲーム起動後にプラグインフォルダ内の DLL ファイルが DNF.exe へ自動的に注入されます。",
+    plugin_inject_help: "有効にすると、ゲーム起動後にプラグインパス内の DLL ファイルが DNF.exe へ自動的に注入されます。",
 
     bg_custom_path_label: "カスタム背景フォルダ",
     bg_custom_path_hint: "例：assets/bg",
@@ -576,7 +592,7 @@ const KO: Tr = Tr {
     hint_username: "아이디 입력",
     hint_password: "비밀번호 입력",
 
-    remember_password: "로그인 상태 유지",
+    remember_password: "비밀번호 저장",
     enter_game: "게임 시작",
     signing_in: "로그인 중\u{2026}",
     register_link: "회원가입",
@@ -607,11 +623,14 @@ const KO: Tr = Tr {
     bg_fill_center: "가운데",
     bg_fill_fit: "화면에 맞춤",
 
-    plugins_dir_label: "플러그인 폴더",
-    plugins_dir_hint: "예: plugins",
-    plugins_dir_help: "이 폴더의 DLL 파일은 게임 실행 시 DNF.exe에 주입됩니다. 경로는 런처 실행 파일 기준 상대 경로입니다.",
+    game_server_ip_label: "실행 시 GAME_SERVER_IP 설정",
+    game_server_ip_help: "활성화하면 런처가 게임 서버 IP를 가져와 환경 변수 GAME_SERVER_IP로 DNF.exe에 전달합니다.",
+
+    plugins_path_label: "플러그인 경로",
+    plugins_path_hint: "예: plugins",
+    plugins_path_help: "이 폴더의 DLL 파일은 게임 실행 시 DNF.exe에 주입됩니다. 경로는 런처 실행 파일 기준 상대 경로입니다.",
     plugin_inject_label: "DLL 주입 사용",
-    plugin_inject_help: "활성화하면 게임 실행 후 플러그인 폴더의 DLL 파일이 DNF.exe에 자동으로 주입됩니다.",
+    plugin_inject_help: "활성화하면 게임 실행 후 플러그인 경로의 DLL 파일이 DNF.exe에 자동으로 주입됩니다.",
 
     bg_custom_path_label: "배경 이미지 폴더",
     bg_custom_path_hint: "예: assets/bg",
@@ -630,10 +649,10 @@ const KO: Tr = Tr {
     aes_key_help: "형식: 16진수 64자리 (0\u{2013}9, a\u{2013}f), 32바이트.",
     saved_config_label: "저장된 설정",
     not_configured: "미설정",
-    clear_btn: "초기화",
+    clear_btn: "지우기",
     save_btn: "저장",
     language_label: "언어",
-    warn_first_launch: "처음 실행하셨네요. 설정에서 서버 주소와 키를 입력해 주세요.",
+    warn_first_launch: "처음 실행입니다. 설정에서 서버 주소와 키를 입력해 주세요.",
     settings_saved: "설정이 저장되었습니다.",
 
     err_server_not_configured: "서버가 설정되지 않았습니다. 설정에서 주소와 키를 입력해 주세요.",
@@ -645,7 +664,7 @@ const KO: Tr = Tr {
     err_enter_new_password: "새 비밀번호를 입력해 주세요.",
     err_client_not_init: "클라이언트가 초기화되지 않았습니다. 먼저 서버 설정을 저장해 주세요.",
 
-    err_mac_prefix: "MAC 주소 가져오기 실패",
+    err_mac_prefix: "MAC 주소 확인 실패",
     err_config_prefix: "설정 오류",
     err_save_prefix: "저장 실패",
     err_network_prefix: "네트워크 오류",

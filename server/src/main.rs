@@ -15,7 +15,7 @@ mod handlers;
 mod services;
 
 use config::Config;
-use handlers::{AppState, encrypted_request, health};
+use handlers::{AppState, encrypted_request, game_server_ip, health};
 use services::AuthService;
 
 #[tokio::main]
@@ -57,10 +57,12 @@ async fn main() -> anyhow::Result<()> {
         auth_service: Arc::new(auth_service),
         aes_cipher: Arc::new(aes_cipher),
         rate_limiter: Arc::new(Mutex::new(HashMap::new())),
+        game_server_ip: config.game_server_ip.clone(),
     };
 
     let app = Router::new()
         .route("/health", get(health))
+        .route("/api/v1/game-server-ip", get(game_server_ip))
         .route("/api/v1/auth", post(encrypted_request))
         .layer(DefaultBodyLimit::max(4096))
         .layer(TraceLayer::new_for_http())

@@ -1,0 +1,4 @@
+[package]
+name = "hook-common"
+version.workspace = true
+edition.workspace = true

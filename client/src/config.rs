@@ -33,10 +33,18 @@ pub struct AppConfig {
     pub bg_custom_prepend: bool,
     /// How background images are scaled to fill the window.
     pub bg_fill_mode: BgFillMode,
-    /// Directory scanned for DLL files to inject after DNF.exe launches.
-    pub plugins_dir: String,
-    /// When false, the DLL injection step is skipped.
+    /// Plugin directory path passed to DNF.exe via environment variable.
+    pub plugins_path: String,
+    /// Controls the DNF_PLUGIN_ENABLED environment variable passed to DNF.exe.
     pub plugin_inject_enabled: bool,
+    /// When true, the launcher fetches the game server IP at login
+    /// and passes it as the GAME_SERVER_IP environment variable to DNF.exe.
+    #[serde(default = "default_true")]
+    pub game_server_ip_enabled: bool,
+}
+
+fn default_true() -> bool {
+    true
 }
 
 impl Default for AppConfig {
@@ -48,8 +56,9 @@ impl Default for AppConfig {
             bg_custom_path: "assets/bg".to_string(),
             bg_custom_prepend: false,
             bg_fill_mode: BgFillMode::Fill,
-            plugins_dir: "plugins".to_string(),
+            plugins_path: "plugins".to_string(),
             plugin_inject_enabled: true,
+            game_server_ip_enabled: true,
         }
     }
 }

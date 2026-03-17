@@ -15,6 +15,11 @@ pub fn is_process_running(_process_name: &str) -> anyhow::Result<bool> {
 }
 
 #[cfg(not(target_os = "windows"))]
-pub fn launch_dnf(_token: &str, _plugins_dir: &str) -> anyhow::Result<()> {
+pub fn launch_dnf(
+    _token: &str,
+    _plugins_path: &str,
+    _inject_enabled: bool,
+    _server_ip: &str,
+) -> anyhow::Result<()> {
     anyhow::bail!("This application only supports Windows")
 }

@@ -22,6 +22,7 @@ pub struct AppState {
     pub auth_service: Arc<AuthService>,
     pub aes_cipher: Arc<dnf_shared::crypto::AesGcmCipher>,
     pub rate_limiter: Arc<Mutex<HashMap<IpAddr, (u32, Instant)>>>,
+    pub game_server_ip: Option<String>,
 }
 
 /// Main request handler for encrypted requests
@@ -217,4 +218,12 @@ pub async fn health() -> impl IntoResponse {
         "status": "ok",
         "timestamp": chrono::Utc::now().to_rfc3339(),
     }))
+}
+
+/// Returns the game server IP as plain text, or 404 if not configured.
+pub async fn game_server_ip(State(state): State<AppState>) -> impl IntoResponse {
+    match &state.game_server_ip {
+        Some(ip) => (StatusCode::OK, ip.clone()).into_response(),
+        None => StatusCode::NOT_FOUND.into_response(),
+    }
 }

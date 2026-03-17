@@ -42,6 +42,9 @@ pub struct Config {
 
     /// Disables the HTTP listener when TLS is active.
     pub tls_only: bool,
+
+    /// Game server IP, reported to clients via GET /api/v1/game-server-ip.
+    pub game_server_ip: Option<String>,
 }
 
 impl Config {
@@ -128,6 +131,20 @@ impl Config {
             .and_then(|v| v.parse::<bool>().ok())
             .unwrap_or(false);
 
+        let game_server_ip = std::env::var("GAME_SERVER_IP")
+            .ok()
+            .map(|s| {
+                let trimmed = s.trim().to_string();
+                trimmed.parse::<std::net::IpAddr>().map_err(|_| {
+                    anyhow::anyhow!(
+                        "GAME_SERVER_IP must be a valid IP address, got: {:?}",
+                        trimmed
+                    )
+                })?;
+                Ok::<String, anyhow::Error>(trimmed)
+            })
+            .transpose()?;
+
         Ok(Self {
             db,
             aes_key_hex,
@@ -139,6 +156,7 @@ impl Config {
             tls_key_path,
             tls_bind_address,
             tls_only,
+            game_server_ip,
         })
     }
 }

@@ -135,6 +135,26 @@ jobs:
           rust: stable-x86_64-gnu
           target: x86_64-pc-windows-gnu
 
+        - build: ijl15-hook-win-msvc
+          crate: ijl15-hook
+          package: ijl15-hook
+          bin: ijl15
+          archive_name: ijl15-hook
+          ext: .dll
+          os: windows-latest
+          rust: stable
+          target: i686-pc-windows-msvc
+
+        - build: ijl15-hook-win-gnu
+          crate: ijl15-hook
+          package: ijl15-hook
+          bin: ijl15
+          archive_name: ijl15-hook
+          ext: .dll
+          os: windows-latest
+          rust: stable-i686-gnu
+          target: i686-pc-windows-gnu
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v5
@@ -150,6 +170,13 @@ jobs:
       uses: taiki-e/install-action@v2
       with:
         tool: cross
+
+    - name: Install i686 MinGW toolchain
+      if: matrix.target == 'i686-pc-windows-gnu'
+      shell: bash
+      run: |
+        /c/msys64/usr/bin/pacman.exe -S --noconfirm mingw-w64-i686-gcc
+        echo "/c/msys64/mingw32/bin" >> $GITHUB_PATH
 
     - name: Cache Cargo registry
       uses: actions/cache@v4
@@ -202,7 +229,9 @@ jobs:
           $cmd build --release --target ${{ matrix.target }} -p ${{ matrix.package }}
         fi
         bin="target/${{ matrix.target }}/release/${{ matrix.bin }}"
-        if [[ "${{ matrix.target }}" == *"windows"* ]]; then
+        if [ -n "${{ matrix.ext }}" ]; then
+          bin="${bin}${{ matrix.ext }}"
+        elif [[ "${{ matrix.target }}" == *"windows"* ]]; then
           bin="${bin}.exe"
         fi
         ls -lh "$bin"
@@ -212,7 +241,8 @@ jobs:
       shell: bash
       run: |
         version="${{ needs.create-release.outputs.version }}"
-        echo "ARCHIVE=${{ matrix.bin }}-$version-${{ matrix.target }}" >> $GITHUB_ENV
+        name="${{ matrix.archive_name || matrix.bin }}"
+        echo "ARCHIVE=${name}-${version}-${{ matrix.target }}" >> $GITHUB_ENV
 
     - name: Create archive directory
       shell: bash
@@ -222,6 +252,8 @@ jobs:
         cp README.md "$ARCHIVE"/
         if [ "${{ matrix.crate }}" == "client" ]; then
           cp client/Config.example.toml "$ARCHIVE"/
+        elif [ "${{ matrix.crate }}" == "ijl15-hook" ]; then
+          cp ijl15-hook/GameServerIP.example.toml "$ARCHIVE"/
         else
           cp server/.env.example "$ARCHIVE"/
         fi
