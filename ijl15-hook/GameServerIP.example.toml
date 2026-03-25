@@ -1,4 +1,4 @@
 # Server IP for DNS redirection.
 # Used as a fallback when GAME_SERVER_IP is not set or invalid.
 
-game_server_ip = "192.168.50.210"
+game_server_ip = "192.168.200.131"

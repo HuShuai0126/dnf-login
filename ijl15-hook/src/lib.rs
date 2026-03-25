@@ -63,6 +63,7 @@ unsafe extern "system" {
         lpOverlapped: *mut core::ffi::c_void,
     ) -> BOOL;
     fn CloseHandle(hObject: *mut core::ffi::c_void) -> BOOL;
+    fn GetLastError() -> DWORD;
 }
 
 /// WinSock-compatible hostent layout.
@@ -395,7 +396,8 @@ unsafe fn load_plugins(hmodule: HMODULE) {
             }
 
             if h.is_null() {
-                unsafe { log_line(&[b"[plugins] FAIL ", &name_ascii[..na_len], b"\n"]) };
+                let err = unsafe { GetLastError() };
+                unsafe { log_line(&[b"[plugins] FAIL ", &name_ascii[..na_len], b" err=0x", &fmt_hex32(err), b"\n"]) };
             } else {
                 unsafe {
                     log_line(&[
