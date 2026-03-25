@@ -76,6 +76,7 @@ jobs:
           os: windows-latest
           rust: stable
           target: x86_64-pc-windows-msvc
+          hook_target: i686-pc-windows-msvc
 
         - build: client-win-gnu
           crate: client
@@ -84,6 +85,7 @@ jobs:
           os: windows-latest
           rust: stable-x86_64-gnu
           target: x86_64-pc-windows-gnu
+          hook_target: i686-pc-windows-gnu
 
         - build: server-linux-gnu
           crate: server
@@ -172,11 +174,16 @@ jobs:
         tool: cross
 
     - name: Install i686 MinGW toolchain
-      if: matrix.target == 'i686-pc-windows-gnu'
+      if: matrix.target == 'i686-pc-windows-gnu' || matrix.hook_target == 'i686-pc-windows-gnu'
       shell: bash
       run: |
         /c/msys64/usr/bin/pacman.exe -S --noconfirm mingw-w64-i686-gcc
         echo "/c/msys64/mingw32/bin" >> $GITHUB_PATH
+
+    - name: Install hook target
+      if: matrix.hook_target
+      shell: bash
+      run: rustup target add ${{ matrix.hook_target }}
 
     - name: Cache Cargo registry
       uses: actions/cache@v5
@@ -237,6 +244,13 @@ jobs:
         ls -lh "$bin"
         echo "BIN=$bin" >> $GITHUB_ENV
 
+    - name: Build ijl15-hook
+      if: matrix.hook_target
+      shell: bash
+      run: |
+        cargo build --release --target ${{ matrix.hook_target }} -p ijl15-hook
+        ls -lh "target/${{ matrix.hook_target }}/release/ijl15.dll"
+
     - name: Determine archive name
       shell: bash
       run: |
@@ -252,6 +266,9 @@ jobs:
         cp README.md "$ARCHIVE"/
         if [ "${{ matrix.crate }}" == "client" ]; then
           cp client/Config.example.toml "$ARCHIVE"/
+          if [ -n "${{ matrix.hook_target }}" ]; then
+            cp "target/${{ matrix.hook_target }}/release/ijl15.dll" "$ARCHIVE"/
+          fi
         elif [ "${{ matrix.crate }}" == "ijl15-hook" ]; then
           cp ijl15-hook/GameServerIP.example.toml "$ARCHIVE"/
         else
