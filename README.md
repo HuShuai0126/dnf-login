@@ -2,6 +2,7 @@
 
 A launcher for Dungeon & Fighter (DNF) written in Rust.
 
+![Screenshot](https://github.com/user-attachments/assets/40e5dad7-a607-4765-aec4-e2b4574b4a29)
 
 > [!WARNING]
 > This launcher does not guarantee compatibility with other launchers. Accounts
