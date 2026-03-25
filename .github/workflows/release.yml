@@ -249,9 +249,11 @@ jobs:
       shell: bash
       run: |
         if [[ "${{ matrix.hook_target }}" == "i686-pc-windows-gnu" ]]; then
-          export CARGO_TARGET_I686_PC_WINDOWS_GNU_LINKER="/c/msys64/mingw32/bin/gcc.exe"
+          rustup toolchain install stable-i686-pc-windows-gnu --no-self-update
+          cargo +stable-i686-pc-windows-gnu build --release --target ${{ matrix.hook_target }} -p ijl15-hook
+        else
+          cargo build --release --target ${{ matrix.hook_target }} -p ijl15-hook
         fi
-        cargo build --release --target ${{ matrix.hook_target }} -p ijl15-hook
         ls -lh "target/${{ matrix.hook_target }}/release/ijl15.dll"
 
     - name: Determine archive name
