@@ -234,6 +234,9 @@ jobs:
       if: matrix.hook_target
       shell: bash
       run: |
+        if [[ "${{ matrix.hook_target }}" == "i686-pc-windows-gnu" ]]; then
+          export CARGO_TARGET_I686_PC_WINDOWS_GNU_LINKER="/c/msys64/mingw32/bin/gcc.exe"
+        fi
         cargo build --release --target ${{ matrix.hook_target }} -p ijl15-hook
         ls -lh "target/${{ matrix.hook_target }}/release/ijl15.dll"
 
