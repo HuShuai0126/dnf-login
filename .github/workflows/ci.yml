@@ -270,23 +270,10 @@ jobs:
           cp server/.env.example "$ARCHIVE"/
         fi
 
-    - name: Build archive
-      shell: bash
-      run: |
-        if [[ "${{ runner.os }}" == "Windows" ]]; then
-          7z a -tzip -mx=9 "$ARCHIVE.zip" "$ARCHIVE"
-          asset="$ARCHIVE.zip"
-        else
-          tar -czf "$ARCHIVE.tar.gz" "$ARCHIVE"
-          asset="$ARCHIVE.tar.gz"
-        fi
-        ls -lh "$asset"
-        echo "ASSET=$asset" >> $GITHUB_ENV
-
     - name: Upload artifact
       uses: actions/upload-artifact@v6
       with:
         name: ${{ env.ARCHIVE }}
-        path: ${{ env.ASSET }}
+        path: ${{ env.ARCHIVE }}
         compression-level: 9
         retention-days: 30
