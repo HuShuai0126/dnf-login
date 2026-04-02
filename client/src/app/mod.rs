@@ -88,6 +88,12 @@ pub struct DnfLoginApp {
     pub(super) current_bg: usize,
     // Horizontal scroll offset (pixels) of the thumbnail strip.
     pub(super) thumb_scroll_offset: f32,
+    // Scroll velocity of the thumbnail strip.
+    pub(super) thumb_velocity: f32,
+    // Whether a drag is active on the thumbnail strip.
+    pub(super) thumb_drag_active: bool,
+    // Total pointer movement during the current drag.
+    pub(super) thumb_drag_distance: f32,
     // Receives decoded background images from worker threads for GPU upload.
     // `None` indicates a failed decode; one message is sent per task.
     pub(super) img_rx: Receiver<Option<BgImageData>>,
@@ -244,6 +250,9 @@ impl DnfLoginApp {
             bg_thumbs,
             current_bg: bg_index,
             thumb_scroll_offset: 0.0,
+            thumb_velocity: 0.0,
+            thumb_drag_active: false,
+            thumb_drag_distance: 0.0,
             img_rx,
             bg_pending: 0,
             bg_loading_started: false,

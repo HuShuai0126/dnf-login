@@ -52,5 +52,16 @@ pub enum DnfError {
     InvalidQqNumber,
 }
 
+/// Wire protocol error keys
+pub mod error_key {
+    pub const INVALID_USERNAME: &str = "invalid_username";
+    pub const INVALID_PASSWORD: &str = "invalid_password";
+    pub const INVALID_QQ: &str = "invalid_qq";
+    pub const USER_EXISTS: &str = "user_exists";
+    pub const WRONG_CREDENTIALS: &str = "wrong_credentials";
+    pub const ACCOUNT_BANNED: &str = "account_banned";
+    pub const FAIL: &str = "fail";
+}
+
 /// Result type alias
 pub type Result<T> = std::result::Result<T, DnfError>;

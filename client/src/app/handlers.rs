@@ -1,3 +1,5 @@
+use dnf_shared::error::error_key;
+
 use super::{DnfLoginApp, TaskResult, TaskType};
 use crate::{
     config::AppConfig,
@@ -9,6 +11,22 @@ use crate::{
 
 // Action handlers
 impl DnfLoginApp {
+    fn translate_server_error(&self, error: &str) -> &'static str {
+        let tr = self.t();
+        match error {
+            error_key::INVALID_USERNAME => tr.err_server_invalid_username,
+            error_key::INVALID_PASSWORD => tr.err_server_invalid_password,
+            error_key::INVALID_QQ => tr.err_server_invalid_qq,
+            error_key::USER_EXISTS => tr.err_server_user_exists,
+            error_key::WRONG_CREDENTIALS => tr.err_server_wrong_credentials,
+            error_key::ACCOUNT_BANNED => tr.err_server_account_banned,
+            _ => {
+                tracing::warn!("Unknown server error key: {}", error);
+                tr.err_server_unknown
+            }
+        }
+    }
+
     pub(super) fn handle_login(&mut self) {
         self.message = None;
         self.message_is_error = false;
@@ -270,9 +288,8 @@ impl DnfLoginApp {
                                 self.set_error(tr.err_network_prefix.to_string());
                             }
                         } else {
-                            self.set_error(
-                                response.error.unwrap_or_else(|| "Login failed".to_string()),
-                            );
+                            let msg = response.error.as_deref().unwrap_or("fail");
+                            self.set_error(self.translate_server_error(msg));
                         }
                     }
                     Err(e) => self.set_error(format!("{}: {}", tr.err_network_prefix, e)),
@@ -289,11 +306,8 @@ impl DnfLoginApp {
                             self.register_password_confirm.clear();
                             self.register_qq.clear();
                         } else {
-                            self.set_error(
-                                response
-                                    .error
-                                    .unwrap_or_else(|| "Registration failed".to_string()),
-                            );
+                            let msg = response.error.as_deref().unwrap_or("fail");
+                            self.set_error(self.translate_server_error(msg));
                         }
                     }
                     Err(e) => self.set_error(format!("{}: {}", tr.err_network_prefix, e)),
@@ -310,11 +324,8 @@ impl DnfLoginApp {
                             self.changepwd_new_password.clear();
                             self.changepwd_confirm.clear();
                         } else {
-                            self.set_error(
-                                response
-                                    .error
-                                    .unwrap_or_else(|| "Password change failed".to_string()),
-                            );
+                            let msg = response.error.as_deref().unwrap_or("fail");
+                            self.set_error(self.translate_server_error(msg));
                         }
                     }
                     Err(e) => self.set_error(format!("{}: {}", tr.err_network_prefix, e)),

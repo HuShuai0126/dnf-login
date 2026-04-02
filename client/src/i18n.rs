@@ -131,6 +131,15 @@ pub struct Tr {
     pub err_enter_new_password: &'static str,
     pub err_client_not_init: &'static str,
 
+    // Server-side validation/error messages
+    pub err_server_invalid_username: &'static str,
+    pub err_server_invalid_password: &'static str,
+    pub err_server_invalid_qq: &'static str,
+    pub err_server_user_exists: &'static str,
+    pub err_server_wrong_credentials: &'static str,
+    pub err_server_account_banned: &'static str,
+    pub err_server_unknown: &'static str,
+
     // Dynamic error prefixes (caller appends ": " + detail)
     pub err_mac_prefix: &'static str,
     pub err_config_prefix: &'static str,
@@ -248,6 +257,14 @@ const EN: Tr = Tr {
     err_enter_new_password: "Please enter a new password.",
     err_client_not_init: "Client not initialized. Please save server settings first.",
 
+    err_server_invalid_username: "Username must be 4\u{2013}32 characters, using only letters, numbers, and underscores.",
+    err_server_invalid_password: "Invalid password format.",
+    err_server_invalid_qq: "QQ number must be 5\u{2013}12 digits.",
+    err_server_user_exists: "This username is already taken.",
+    err_server_wrong_credentials: "Incorrect username or password.",
+    err_server_account_banned: "This account has been banned.",
+    err_server_unknown: "Operation failed. Please try again.",
+
     err_mac_prefix: "Failed to get MAC address",
     err_config_prefix: "Invalid configuration",
     err_save_prefix: "Failed to save",
@@ -351,6 +368,14 @@ const ZH_CN: Tr = Tr {
     err_enter_old_password: "请输入原密码。",
     err_enter_new_password: "请输入新密码。",
     err_client_not_init: "客户端未初始化，请先保存服务器设置。",
+
+    err_server_invalid_username: "用户名须为 4\u{2013}32 个字符，仅支持字母、数字和下划线。",
+    err_server_invalid_password: "密码格式无效。",
+    err_server_invalid_qq: "QQ 号须为 5\u{2013}12 位数字。",
+    err_server_user_exists: "该用户名已被注册。",
+    err_server_wrong_credentials: "用户名或密码错误。",
+    err_server_account_banned: "该账号已被封禁。",
+    err_server_unknown: "操作失败，请重试。",
 
     err_mac_prefix: "获取 MAC 地址失败",
     err_config_prefix: "配置无效",
@@ -456,6 +481,14 @@ const ZH_TW: Tr = Tr {
     err_enter_new_password: "請輸入新密碼。",
     err_client_not_init: "用戶端未初始化，請先儲存伺服器設定。",
 
+    err_server_invalid_username: "帳號須為 4\u{2013}32 個字元，僅支援字母、數字及底線。",
+    err_server_invalid_password: "密碼格式無效。",
+    err_server_invalid_qq: "QQ 號碼須為 5\u{2013}12 位數字。",
+    err_server_user_exists: "此帳號已被註冊。",
+    err_server_wrong_credentials: "帳號或密碼錯誤。",
+    err_server_account_banned: "此帳號已被停權。",
+    err_server_unknown: "操作失敗，請重試。",
+
     err_mac_prefix: "取得 MAC 位址失敗",
     err_config_prefix: "設定無效",
     err_save_prefix: "儲存失敗",
@@ -560,6 +593,14 @@ const JA: Tr = Tr {
     err_enter_new_password: "新しいパスワードを入力してください。",
     err_client_not_init: "クライアントが初期化されていません。先に設定を保存してください。",
 
+    err_server_invalid_username: "ユーザー名は4\u{301c}32文字で、英数字とアンダースコアのみ使用できます。",
+    err_server_invalid_password: "パスワードの形式が正しくありません。",
+    err_server_invalid_qq: "QQ番号は5\u{301c}12桁の数字で入力してください。",
+    err_server_user_exists: "このユーザー名はすでに使用されています。",
+    err_server_wrong_credentials: "ユーザー名またはパスワードが正しくありません。",
+    err_server_account_banned: "このアカウントは利用停止されています。",
+    err_server_unknown: "操作に失敗しました。もう一度お試しください。",
+
     err_mac_prefix: "MACアドレス取得失敗",
     err_config_prefix: "設定エラー",
     err_save_prefix: "保存失敗",
@@ -663,6 +704,14 @@ const KO: Tr = Tr {
     err_enter_old_password: "기존 비밀번호를 입력해 주세요.",
     err_enter_new_password: "새 비밀번호를 입력해 주세요.",
     err_client_not_init: "클라이언트가 초기화되지 않았습니다. 먼저 서버 설정을 저장해 주세요.",
+
+    err_server_invalid_username: "아이디는 4~32자이며, 영문, 숫자, 밑줄만 사용할 수 있습니다.",
+    err_server_invalid_password: "비밀번호 형식이 올바르지 않습니다.",
+    err_server_invalid_qq: "QQ 번호는 5~12자리 숫자로 입력해 주세요.",
+    err_server_user_exists: "이미 사용 중인 아이디입니다.",
+    err_server_wrong_credentials: "아이디 또는 비밀번호가 올바르지 않습니다.",
+    err_server_account_banned: "이 계정은 이용이 정지되었습니다.",
+    err_server_unknown: "작업에 실패했습니다. 다시 시도해 주세요.",
 
     err_mac_prefix: "MAC 주소 확인 실패",
     err_config_prefix: "설정 오류",

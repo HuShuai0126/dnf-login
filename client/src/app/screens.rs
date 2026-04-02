@@ -66,8 +66,11 @@ impl DnfLoginApp {
 
         let login_enabled =
             !self.username.is_empty() && !self.password.is_empty() && self.current_task.is_none();
+        let enter_pressed = ui.input(|i| i.key_pressed(egui::Key::Enter));
 
-        if Self::primary_button(ui, tr.enter_game, login_enabled) {
+        if Self::primary_button(ui, tr.enter_game, login_enabled)
+            || (enter_pressed && login_enabled)
+        {
             self.handle_login();
         }
 
@@ -215,8 +218,10 @@ impl DnfLoginApp {
                 && !self.register_password.is_empty()
                 && !self.register_password_confirm.is_empty()
                 && self.current_task.is_none();
+            let enter_pressed = ui.input(|i| i.key_pressed(egui::Key::Enter));
 
-            if Self::primary_button_slim(ui, tr.register_btn, enabled) {
+            if Self::primary_button_slim(ui, tr.register_btn, enabled) || (enter_pressed && enabled)
+            {
                 self.handle_register();
             }
 
@@ -289,8 +294,11 @@ impl DnfLoginApp {
                 && !self.changepwd_new_password.is_empty()
                 && !self.changepwd_confirm.is_empty()
                 && self.current_task.is_none();
+            let enter_pressed = ui.input(|i| i.key_pressed(egui::Key::Enter));
 
-            if Self::primary_button_slim(ui, tr.change_password_btn, enabled) {
+            if Self::primary_button_slim(ui, tr.change_password_btn, enabled)
+                || (enter_pressed && enabled)
+            {
                 self.handle_change_password();
             }
 
@@ -589,7 +597,12 @@ impl DnfLoginApp {
                     self.settings_aes_key.clear();
                 }
                 ui.add_space(6.0);
-                if Self::primary_button_slim(ui, tr.save_btn, true) {
+                let save_enabled = !self.settings_server_url.trim().is_empty()
+                    && !self.settings_aes_key.trim().is_empty();
+                let enter_pressed = ui.input(|i| i.key_pressed(egui::Key::Enter));
+                if Self::primary_button_slim(ui, tr.save_btn, save_enabled)
+                    || (enter_pressed && save_enabled)
+                {
                     self.handle_save_settings();
                 }
             });

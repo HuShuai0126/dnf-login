@@ -5,7 +5,7 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use dnf_shared::{Request, error::DnfError, protocol::Response as DnfResponse};
+use dnf_shared::{Request, error::DnfError, error::error_key, protocol::Response as DnfResponse};
 use std::{
     collections::HashMap,
     net::{IpAddr, SocketAddr},
@@ -123,13 +123,9 @@ async fn login(
         }
         Err(e) => {
             tracing::warn!("Login failed for {} (ip={}): {}", username, ip_address, e);
-            if matches!(
-                e.downcast_ref::<DnfError>(),
-                Some(DnfError::AccountBanned(_))
-            ) {
-                DnfResponse::error("Account has been banned")
-            } else {
-                DnfResponse::error("Username or password Error")
+            match e.downcast_ref::<DnfError>() {
+                Some(DnfError::AccountBanned(_)) => DnfResponse::error(error_key::ACCOUNT_BANNED),
+                _ => DnfResponse::error(error_key::WRONG_CREDENTIALS),
             }
         }
     }
@@ -152,10 +148,12 @@ async fn register(
         }
         Err(e) => {
             tracing::warn!("Registration failed for {}: {}", username, e);
-            if matches!(e.downcast_ref::<DnfError>(), Some(DnfError::UserExists)) {
-                DnfResponse::error("repeat")
-            } else {
-                DnfResponse::error("fail")
+            match e.downcast_ref::<DnfError>() {
+                Some(DnfError::UserExists) => DnfResponse::error(error_key::USER_EXISTS),
+                Some(DnfError::InvalidUsername) => DnfResponse::error(error_key::INVALID_USERNAME),
+                Some(DnfError::InvalidPassword) => DnfResponse::error(error_key::INVALID_PASSWORD),
+                Some(DnfError::InvalidQqNumber) => DnfResponse::error(error_key::INVALID_QQ),
+                _ => DnfResponse::error(error_key::FAIL),
             }
         }
     }
@@ -178,7 +176,7 @@ async fn forgot_password(
         }
         Err(e) => {
             tracing::warn!("Password reset failed for {}: {}", username, e);
-            DnfResponse::error("fail")
+            DnfResponse::error(error_key::FAIL)
         }
     }
 }
@@ -200,14 +198,7 @@ async fn change_password(
         }
         Err(e) => {
             tracing::warn!("Password change failed for {}: {}", username, e);
-            if matches!(
-                e.downcast_ref::<DnfError>(),
-                Some(DnfError::AuthenticationFailed)
-            ) {
-                DnfResponse::error("passworderror")
-            } else {
-                DnfResponse::error("fail")
-            }
+            DnfResponse::error(error_key::FAIL)
         }
     }
 }

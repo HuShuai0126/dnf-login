@@ -3,6 +3,9 @@ use eframe::egui;
 use super::{DnfLoginApp, THUMB_H, THUMB_W};
 use crate::config::BgFillMode;
 
+/// Threshold to distinguish a drag from a click.
+const DRAG_THRESHOLD: f32 = 3.0;
+
 // App icon
 impl DnfLoginApp {
     /// Draws the application icon. Falls back to a painted shape if no texture is loaded.
@@ -197,10 +200,54 @@ impl DnfLoginApp {
                 .latest_pos()
                 .is_some_and(|p| strip_sense.contains(p))
         });
+
+        // Mouse wheel scroll
         if in_strip {
             let delta = ui.input(|i| i.smooth_scroll_delta);
             self.thumb_scroll_offset -= delta.x + delta.y;
             self.thumb_scroll_offset = self.thumb_scroll_offset.clamp(0.0, max_scroll);
+        }
+
+        // Drag scrolling with momentum
+        let (primary_pressed, primary_down, pointer_dx) = ui.input(|i| {
+            (
+                i.pointer.primary_pressed(),
+                i.pointer.primary_down(),
+                i.pointer.delta().x,
+            )
+        });
+
+        if primary_pressed && in_strip {
+            self.thumb_drag_active = true;
+            self.thumb_velocity = 0.0;
+            self.thumb_drag_distance = 0.0;
+        }
+
+        if self.thumb_drag_active {
+            if primary_down {
+                self.thumb_drag_distance += pointer_dx.abs();
+                let dx = -pointer_dx;
+                self.thumb_scroll_offset += dx;
+                self.thumb_scroll_offset = self.thumb_scroll_offset.clamp(0.0, max_scroll);
+                self.thumb_velocity = self.thumb_velocity * 0.6 + dx * 0.4;
+            } else {
+                self.thumb_drag_active = false;
+                // Treat short movements as a click, not a drag
+                if self.thumb_drag_distance < DRAG_THRESHOLD {
+                    self.thumb_velocity = 0.0;
+                }
+            }
+        }
+
+        // Momentum decay
+        if !self.thumb_drag_active && self.thumb_velocity.abs() > 0.5 {
+            self.thumb_scroll_offset += self.thumb_velocity;
+            self.thumb_scroll_offset = self.thumb_scroll_offset.clamp(0.0, max_scroll);
+            self.thumb_velocity *= 0.92;
+            if self.thumb_velocity.abs() < 0.5 {
+                self.thumb_velocity = 0.0;
+            }
+            ui.ctx().request_repaint();
         }
 
         let clip_rect = egui::Rect::from_min_max(
@@ -254,7 +301,7 @@ impl DnfLoginApp {
                 );
             }
 
-            if resp.clicked() {
+            if resp.clicked() && self.thumb_drag_distance < DRAG_THRESHOLD {
                 self.current_bg = i;
                 self.config.bg_index = i;
                 if let Err(e) = self.config.save() {
