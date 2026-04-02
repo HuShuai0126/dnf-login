@@ -199,7 +199,7 @@ mod tests {
         let toml_str = r#"
 server_url = ""
 aes_key = ""
-language = "en"
+language = "English"
 bg_custom_path = "assets/bg"
 bg_custom_prepend = false
 bg_fill_mode = "Fill"

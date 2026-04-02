@@ -162,28 +162,62 @@ impl DnfLoginApp {
         }
     }
 
-    /// Loads a CJK fallback font from Windows system fonts, if available.
-    pub(super) fn try_load_cjk_font(ctx: &egui::Context) {
-        let candidates = [
-            r"C:\Windows\Fonts\msyh.ttc",
-            r"C:\Windows\Fonts\msyhbd.ttc",
-            r"C:\Windows\Fonts\simsun.ttc",
+    /// Loads CJK fallback fonts from Windows system fonts for Chinese, Japanese, and Korean.
+    pub(super) fn try_load_cjk_fonts(ctx: &egui::Context) {
+        let font_groups: &[(&str, &[&str])] = &[
+            (
+                "cjk_zh",
+                &[
+                    r"C:\Windows\Fonts\msyh.ttc",
+                    r"C:\Windows\Fonts\msjh.ttc",
+                    r"C:\Windows\Fonts\simsun.ttc",
+                ],
+            ),
+            (
+                "cjk_ja",
+                &[
+                    r"C:\Windows\Fonts\meiryo.ttc",
+                    r"C:\Windows\Fonts\YuGothR.ttc",
+                    r"C:\Windows\Fonts\msgothic.ttc",
+                ],
+            ),
+            (
+                "cjk_ko",
+                &[
+                    r"C:\Windows\Fonts\malgun.ttf",
+                    r"C:\Windows\Fonts\gulim.ttc",
+                    r"C:\Windows\Fonts\batang.ttc",
+                ],
+            ),
         ];
 
         let mut fonts = egui::FontDefinitions::default();
-        for path in &candidates {
-            if let Ok(data) = std::fs::read(path) {
-                fonts.font_data.insert(
-                    "cjk".to_owned(),
-                    std::sync::Arc::new(egui::FontData::from_owned(data)),
-                );
-                if let Some(family) = fonts.families.get_mut(&egui::FontFamily::Proportional) {
-                    family.push("cjk".to_owned());
+        let mut loaded = false;
+
+        for &(name, candidates) in font_groups {
+            let mut group_loaded = false;
+            for path in candidates {
+                if let Ok(data) = std::fs::read(path) {
+                    fonts.font_data.insert(
+                        name.to_owned(),
+                        std::sync::Arc::new(egui::FontData::from_owned(data)),
+                    );
+                    if let Some(family) = fonts.families.get_mut(&egui::FontFamily::Proportional) {
+                        family.push(name.to_owned());
+                    }
+                    tracing::info!("CJK font loaded: {} from {}", name, path);
+                    loaded = true;
+                    group_loaded = true;
+                    break;
                 }
-                tracing::info!("CJK font loaded: {}", path);
-                ctx.set_fonts(fonts);
-                return;
             }
+            if !group_loaded {
+                tracing::warn!("No font found for group: {}", name);
+            }
+        }
+
+        if loaded {
+            ctx.set_fonts(fonts);
         }
     }
 }

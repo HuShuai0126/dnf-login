@@ -127,7 +127,7 @@ pub struct DnfLoginApp {
 // Setup
 impl DnfLoginApp {
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        Self::try_load_cjk_font(&cc.egui_ctx);
+        Self::try_load_cjk_fonts(&cc.egui_ctx);
 
         let mut style = (*cc.egui_ctx.style()).clone();
         style.text_styles.insert(
