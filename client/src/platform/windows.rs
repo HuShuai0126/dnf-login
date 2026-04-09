@@ -2,7 +2,8 @@ use anyhow::Result;
 #[cfg(target_os = "windows")]
 use windows::{
     Win32::Foundation::*, Win32::NetworkManagement::IpHelper::*,
-    Win32::System::Diagnostics::ToolHelp::*,
+    Win32::System::Diagnostics::ToolHelp::*, Win32::System::Threading::*,
+    Win32::UI::WindowsAndMessaging::*,
 };
 
 #[cfg(target_os = "windows")]
@@ -50,43 +51,17 @@ pub fn get_mac_address() -> Result<String> {
 
 #[cfg(target_os = "windows")]
 pub fn is_process_running(process_name: &str) -> Result<bool> {
-    unsafe {
-        let snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0)?;
-
-        if snapshot.is_invalid() {
-            anyhow::bail!("Failed to create process snapshot");
-        }
-
-        let mut pe32 = PROCESSENTRY32W {
-            dwSize: std::mem::size_of::<PROCESSENTRY32W>() as u32,
-            ..Default::default()
-        };
-
-        if Process32FirstW(snapshot, &mut pe32).is_err() {
-            let _ = CloseHandle(snapshot);
-            anyhow::bail!("Failed to get first process");
-        }
-
-        let target_name = process_name.to_lowercase();
-
-        loop {
-            let exe_file = String::from_utf16_lossy(
-                &pe32.szExeFile[..pe32.szExeFile.iter().position(|&c| c == 0).unwrap_or(0)],
-            );
-
-            if exe_file.to_lowercase() == target_name {
-                let _ = CloseHandle(snapshot);
+    let pids = find_process_pids(process_name)?;
+    for &pid in &pids {
+        if let Ok(handle) = unsafe { OpenProcess(PROCESS_SYNCHRONIZE, false, pid) } {
+            let status = unsafe { WaitForSingleObject(handle, 0) };
+            let _ = unsafe { CloseHandle(handle) };
+            if status == WAIT_TIMEOUT {
                 return Ok(true);
             }
-
-            if Process32NextW(snapshot, &mut pe32).is_err() {
-                break;
-            }
         }
-
-        let _ = CloseHandle(snapshot);
-        Ok(false)
     }
+    Ok(false)
 }
 
 #[cfg(target_os = "windows")]
@@ -102,10 +77,6 @@ pub fn launch_dnf(
             "DNF.exe not found. Please place the launcher in the game directory.\nExpected path: {}",
             dnf_path.display()
         );
-    }
-
-    if is_process_running("DNF.exe")? {
-        anyhow::bail!("DNF is already running. Please close the game first.");
     }
 
     tracing::info!("Launching DNF with authentication token");
@@ -140,6 +111,99 @@ pub fn launch_dnf(
             inject_enabled,
         );
         let _ = std::fs::write(dir.join("launch.log"), content);
+    }
+
+    Ok(())
+}
+
+#[cfg(target_os = "windows")]
+fn find_process_pids(process_name: &str) -> Result<Vec<u32>> {
+    unsafe {
+        let snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0)?;
+        if snapshot.is_invalid() {
+            anyhow::bail!("Failed to create process snapshot");
+        }
+        let mut pe32 = PROCESSENTRY32W {
+            dwSize: std::mem::size_of::<PROCESSENTRY32W>() as u32,
+            ..Default::default()
+        };
+        let mut pids = Vec::new();
+        let target = process_name.to_lowercase();
+        if Process32FirstW(snapshot, &mut pe32).is_ok() {
+            loop {
+                let name = String::from_utf16_lossy(
+                    &pe32.szExeFile[..pe32.szExeFile.iter().position(|&c| c == 0).unwrap_or(0)],
+                );
+                if name.to_lowercase() == target {
+                    pids.push(pe32.th32ProcessID);
+                }
+                if Process32NextW(snapshot, &mut pe32).is_err() {
+                    break;
+                }
+            }
+        }
+        let _ = CloseHandle(snapshot);
+        Ok(pids)
+    }
+}
+
+#[cfg(target_os = "windows")]
+unsafe extern "system" fn close_window_by_pid(hwnd: HWND, lparam: LPARAM) -> windows::core::BOOL {
+    let target_pid = lparam.0 as u32;
+    let mut window_pid: u32 = 0;
+    unsafe {
+        GetWindowThreadProcessId(hwnd, Some(&mut window_pid));
+        if window_pid == target_pid {
+            let _ = PostMessageW(Some(hwnd), WM_CLOSE, WPARAM(0), LPARAM(0));
+        }
+    }
+    windows::core::BOOL(1)
+}
+
+/// Attempts to close the process gracefully via WM_CLOSE, then
+/// force-terminates after 3 seconds if the process is still running.
+#[cfg(target_os = "windows")]
+pub fn graceful_terminate_process(process_name: &str) -> Result<()> {
+    let pids = find_process_pids(process_name)?;
+    if pids.is_empty() {
+        return Ok(());
+    }
+
+    let handles: Vec<HANDLE> = pids
+        .iter()
+        .filter_map(|&pid| unsafe {
+            OpenProcess(PROCESS_SYNCHRONIZE | PROCESS_TERMINATE, false, pid).ok()
+        })
+        .collect();
+    if handles.is_empty() {
+        return Ok(());
+    }
+
+    for &pid in &pids {
+        unsafe {
+            let _ = EnumWindows(Some(close_window_by_pid), LPARAM(pid as isize));
+        }
+    }
+
+    // WaitForMultipleObjects accepts at most 64 handles.
+    let wait_slice = &handles[..handles.len().min(64)];
+    let result = unsafe { WaitForMultipleObjects(wait_slice, true, 3000) };
+
+    if result == WAIT_TIMEOUT || result == WAIT_FAILED {
+        for &handle in &handles {
+            unsafe {
+                let _ = TerminateProcess(handle, 1);
+            }
+        }
+        // TerminateProcess is guaranteed to eventually complete; wait
+        // for the kernel to fully release all process resources.
+        unsafe { WaitForMultipleObjects(wait_slice, true, INFINITE) };
+    }
+
+    for &handle in &handles {
+        unsafe {
+            let _ = CloseHandle(handle);
+        }
     }
 
     Ok(())

@@ -1,6 +1,6 @@
 use dnf_shared::error::error_key;
 
-use super::{DnfLoginApp, TaskResult, TaskType};
+use super::{DnfLoginApp, PendingLaunch, TaskResult, TaskType};
 use crate::{
     config::AppConfig,
     game::DnfLauncher,
@@ -272,6 +272,18 @@ impl DnfLoginApp {
                                 let plugins_path = self.config.plugins_path.clone();
                                 let inject_enabled = self.config.plugin_inject_enabled;
                                 let server_ip = game_server_ip.unwrap_or_default();
+
+                                if platform::is_process_running("DNF.exe").unwrap_or(false) {
+                                    self.pending_launch = Some(PendingLaunch {
+                                        token,
+                                        plugins_path,
+                                        inject_enabled,
+                                        server_ip,
+                                    });
+                                    self.show_confirm_close_dnf = true;
+                                    return;
+                                }
+
                                 if let Err(e) = DnfLauncher::launch_with_token(
                                     &token,
                                     &plugins_path,
@@ -331,6 +343,43 @@ impl DnfLoginApp {
                     Err(e) => self.set_error(format!("{}: {}", tr.err_network_prefix, e)),
                 }
             }
+            TaskResult::CloseDnf(res) => {
+                self.current_task = None;
+                self.show_confirm_close_dnf = false;
+                match res {
+                    Ok(()) => {
+                        if let Some(launch) = self.pending_launch.take() {
+                            if let Err(e) = DnfLauncher::launch_with_token(
+                                &launch.token,
+                                &launch.plugins_path,
+                                launch.inject_enabled,
+                                &launch.server_ip,
+                            ) {
+                                self.set_error(format!("{}: {}", tr.err_launch_prefix, e));
+                            } else {
+                                tracing::info!("Game launched after closing previous instance");
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        self.pending_launch = None;
+                        self.set_error(format!("{}: {}", tr.err_launch_prefix, e));
+                    }
+                }
+            }
         }
+    }
+
+    pub(super) fn handle_close_dnf(&mut self) {
+        tracing::info!("Closing DNF.exe before relaunch");
+        self.current_task = Some(TaskType::CloseDnf);
+        let tx = self.task_tx.clone();
+        self.runtime.spawn(async move {
+            let result =
+                tokio::task::spawn_blocking(|| platform::graceful_terminate_process("DNF.exe"))
+                    .await
+                    .unwrap_or_else(|e| Err(anyhow::anyhow!("{}", e)));
+            let _ = tx.send(TaskResult::CloseDnf(result));
+        });
     }
 }

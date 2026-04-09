@@ -10,7 +10,6 @@ impl DnfLauncher {
         inject_enabled: bool,
         server_ip: &str,
     ) -> Result<()> {
-        // Process running check is performed inside platform::launch_dnf.
         platform::launch_dnf(token, plugins_path, inject_enabled, server_ip)?;
         tracing::info!("DNF launched");
         Ok(())

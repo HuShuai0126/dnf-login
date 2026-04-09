@@ -59,12 +59,21 @@ pub(super) enum TaskType {
     Login,
     Register,
     ChangePassword,
+    CloseDnf,
 }
 
 pub(super) enum TaskResult {
     Login(Result<crate::network::LoginResponse>, Option<String>),
     Register(Result<crate::network::RegisterResponse>),
     ChangePassword(Result<crate::network::SimpleResponse>),
+    CloseDnf(Result<()>),
+}
+
+pub(super) struct PendingLaunch {
+    pub(super) token: String,
+    pub(super) plugins_path: String,
+    pub(super) inject_enabled: bool,
+    pub(super) server_ip: String,
 }
 
 pub struct DnfLoginApp {
@@ -128,6 +137,9 @@ pub struct DnfLoginApp {
 
     pub(super) message: Option<String>,
     pub(super) message_is_error: bool,
+
+    pub(super) show_confirm_close_dnf: bool,
+    pub(super) pending_launch: Option<PendingLaunch>,
 }
 
 // Setup
@@ -277,6 +289,8 @@ impl DnfLoginApp {
             changepwd_confirm: String::new(),
             message: None,
             message_is_error: false,
+            show_confirm_close_dnf: false,
+            pending_launch: None,
         }
     }
 }
@@ -359,6 +373,10 @@ impl eframe::App for DnfLoginApp {
                 }
                 self.show_message(ui);
             });
+
+        if self.show_confirm_close_dnf {
+            self.show_confirm_close_dialog(ctx);
+        }
 
         if self.current_task.is_some() {
             ctx.request_repaint();

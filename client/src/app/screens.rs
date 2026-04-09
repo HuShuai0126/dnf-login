@@ -20,7 +20,7 @@ impl DnfLoginApp {
 
         ui.vertical_centered(|ui| {
             Self::draw_app_icon(ui, self.app_icon.as_ref());
-            ui.add_space(4.0);
+            ui.add_space(2.0);
             ui.label(
                 egui::RichText::new(tr.app_title)
                     .size(22.0)
@@ -35,7 +35,7 @@ impl DnfLoginApp {
             );
         });
 
-        ui.add_space(16.0);
+        ui.add_space(10.0);
 
         if !self.config.is_configured() {
             Self::warning_box(ui, tr.warn_server_not_configured);
@@ -676,6 +676,38 @@ impl DnfLoginApp {
             .clicked()
         {
             self.state = AppState::Login;
+        }
+    }
+}
+
+// Confirm close DNF dialog
+impl DnfLoginApp {
+    pub(super) fn show_confirm_close_dialog(&mut self, ctx: &egui::Context) {
+        let tr = self.t();
+        let loading = if matches!(self.current_task, Some(TaskType::CloseDnf)) {
+            Some(tr.closing_dnf)
+        } else {
+            None
+        };
+
+        let action = Self::confirm_dialog(
+            ctx,
+            "close_dialog",
+            tr.confirm_close_dnf_title,
+            tr.confirm_close_dnf_msg,
+            tr.confirm_close_yes,
+            tr.confirm_close_no,
+            loading,
+        );
+
+        match action {
+            Some(true) => self.handle_close_dnf(),
+            Some(false) => {
+                self.show_confirm_close_dnf = false;
+                self.pending_launch = None;
+                self.message = None;
+            }
+            None => {}
         }
     }
 }

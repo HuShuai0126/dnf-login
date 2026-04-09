@@ -20,6 +20,8 @@ impl DnfLoginApp {
             ui.add(
                 egui::TextEdit::singleline(value)
                     .desired_width(f32::INFINITY)
+                    .min_size(egui::vec2(0.0, 20.0))
+                    .margin(egui::vec2(4.0, 2.75))
                     .hint_text(hint)
                     .font(egui::TextStyle::Body),
             )
@@ -43,6 +45,8 @@ impl DnfLoginApp {
                 egui::TextEdit::singleline(value)
                     .password(true)
                     .desired_width(f32::INFINITY)
+                    .min_size(egui::vec2(0.0, 20.0))
+                    .margin(egui::vec2(4.0, 2.75))
                     .hint_text(hint)
                     .font(egui::TextStyle::Body),
             )
@@ -172,5 +176,93 @@ impl DnfLoginApp {
                     ui.label(egui::RichText::new(text).size(13.5).color(color));
                 });
             });
+    }
+
+    pub(super) fn confirm_dialog(
+        ctx: &egui::Context,
+        id: &str,
+        title: &str,
+        message: &str,
+        confirm_label: &str,
+        cancel_label: &str,
+        loading: Option<&str>,
+    ) -> Option<bool> {
+        let overlay_layer = egui::LayerId::new(
+            egui::Order::Foreground,
+            egui::Id::new(format!("{id}_overlay")),
+        );
+        ctx.layer_painter(overlay_layer).rect_filled(
+            ctx.viewport_rect(),
+            0.0,
+            egui::Color32::from_black_alpha(140),
+        );
+
+        let glass = egui::Frame::new()
+            .fill(Self::c_glass_fill())
+            .stroke(egui::Stroke::new(1.0, Self::c_glass_border()))
+            .corner_radius(egui::CornerRadius::same(14))
+            .inner_margin(egui::vec2(24.0, 20.0));
+
+        let mut action = None;
+
+        egui::Window::new(id)
+            .title_bar(false)
+            .resizable(false)
+            .movable(false)
+            .min_width(340.0)
+            .max_width(340.0)
+            .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
+            .order(egui::Order::Foreground)
+            .frame(glass)
+            .show(ctx, |ui| {
+                ui.vertical_centered(|ui| {
+                    ui.label(
+                        egui::RichText::new(title)
+                            .size(19.0)
+                            .strong()
+                            .color(Self::c_text()),
+                    );
+                });
+                ui.add_space(10.0);
+
+                ui.vertical_centered(|ui| {
+                    ui.label(
+                        egui::RichText::new(message)
+                            .size(13.5)
+                            .color(Self::c_text2()),
+                    );
+                });
+                ui.add_space(16.0);
+
+                if let Some(loading_text) = loading {
+                    ui.vertical_centered(|ui| {
+                        ui.horizontal(|ui| {
+                            ui.spinner();
+                            ui.label(
+                                egui::RichText::new(loading_text)
+                                    .size(13.0)
+                                    .color(Self::c_text2()),
+                            );
+                        });
+                    });
+                } else {
+                    let enter_pressed = ui.input(|i| i.key_pressed(egui::Key::Enter));
+                    if Self::primary_button_slim(ui, confirm_label, true) || enter_pressed {
+                        action = Some(true);
+                    }
+                    ui.add_space(8.0);
+                    if ui
+                        .add_sized(
+                            egui::vec2(ui.available_width(), 36.0),
+                            Self::secondary_button(cancel_label),
+                        )
+                        .clicked()
+                    {
+                        action = Some(false);
+                    }
+                }
+            });
+
+        action
     }
 }

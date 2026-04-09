@@ -152,6 +152,13 @@ pub struct Tr {
     pub register_success: &'static str,
     pub change_password_success: &'static str,
 
+    // Confirm close dialog
+    pub confirm_close_dnf_title: &'static str,
+    pub confirm_close_dnf_msg: &'static str,
+    pub confirm_close_yes: &'static str,
+    pub confirm_close_no: &'static str,
+    pub closing_dnf: &'static str,
+
     // About screen
     pub about_link: &'static str,
     pub about_title: &'static str,
@@ -275,6 +282,12 @@ const EN: Tr = Tr {
     register_success: "Registration successful. Please log in.",
     change_password_success: "Password changed successfully. Please log in again.",
 
+    confirm_close_dnf_title: "Game Already Running",
+    confirm_close_dnf_msg: "DNF.exe is already running.\nClose it and launch the game?",
+    confirm_close_yes: "CLOSE AND CONTINUE",
+    confirm_close_no: "Cancel",
+    closing_dnf: "Closing DNF.exe\u{2026}",
+
     about_link: "About",
     about_title: "About",
     about_launcher_name_label: "LAUNCHER",
@@ -386,6 +399,12 @@ const ZH_CN: Tr = Tr {
     login_success: "登录成功，正在启动游戏\u{2026}",
     register_success: "注册成功，请登录。",
     change_password_success: "密码已修改，请重新登录。",
+
+    confirm_close_dnf_title: "游戏正在运行",
+    confirm_close_dnf_msg: "DNF.exe 正在运行，\n是否关闭后继续启动？",
+    confirm_close_yes: "关闭并继续",
+    confirm_close_no: "取消",
+    closing_dnf: "正在关闭 DNF.exe\u{2026}",
 
     about_link: "关于",
     about_title: "关于",
@@ -499,6 +518,12 @@ const ZH_TW: Tr = Tr {
     register_success: "註冊成功，請登入。",
     change_password_success: "密碼已修改，請重新登入。",
 
+    confirm_close_dnf_title: "遊戲正在執行",
+    confirm_close_dnf_msg: "DNF.exe 正在執行，\n是否關閉後繼續啟動？",
+    confirm_close_yes: "關閉並繼續",
+    confirm_close_no: "取消",
+    closing_dnf: "正在關閉 DNF.exe\u{2026}",
+
     about_link: "關於",
     about_title: "關於",
     about_launcher_name_label: "啟動器",
@@ -611,6 +636,12 @@ const JA: Tr = Tr {
     register_success: "登録完了。ログインしてください。",
     change_password_success: "パスワードを変更しました。再度ログインしてください。",
 
+    confirm_close_dnf_title: "ゲーム実行中",
+    confirm_close_dnf_msg: "DNF.exe が実行中です。\n終了してゲームを起動しますか？",
+    confirm_close_yes: "終了して続行",
+    confirm_close_no: "キャンセル",
+    closing_dnf: "DNF.exe を終了中\u{2026}",
+
     about_link: "バージョン情報",
     about_title: "バージョン情報",
     about_launcher_name_label: "ランチャー名",
@@ -722,6 +753,12 @@ const KO: Tr = Tr {
     login_success: "로그인 성공. 게임을 시작합니다\u{2026}",
     register_success: "가입 완료. 로그인해 주세요.",
     change_password_success: "비밀번호가 변경되었습니다. 다시 로그인해 주세요.",
+
+    confirm_close_dnf_title: "게임 실행 중",
+    confirm_close_dnf_msg: "DNF.exe가 이미 실행 중입니다.\n종료 후 새로 시작하시겠습니까?",
+    confirm_close_yes: "종료 후 계속",
+    confirm_close_no: "취소",
+    closing_dnf: "DNF.exe 종료 중\u{2026}",
 
     about_link: "정보",
     about_title: "정보",
