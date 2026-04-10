@@ -149,7 +149,12 @@ MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 我的验证
 ```shell
+
 rustup target add i686-pc-windows-msvc
+安装nasm：https://www.nasm.us/pub/nasm/releasebuilds/  下载2.16版本
+安装后，配置环境变量。将安装目录配置到path中。验证：nasm --version
+// 构建
 cargo build --release --target i686-pc-windows-msvc
+// 打包
 cargo test --target i686-pc-windows-msvc
 ```
