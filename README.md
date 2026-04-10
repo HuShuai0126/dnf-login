@@ -144,3 +144,11 @@ To disable plugin loading: uncheck the toggle in the settings screen, set `plugi
 ## License
 
 MIT License - see the [LICENSE](LICENSE) file for details.
+
+
+
+## 我的验证
+```shell
+rustup target add i686-pc-windows-msvc
+cargo build --release --target i686-pc-windows-msvc
+```
